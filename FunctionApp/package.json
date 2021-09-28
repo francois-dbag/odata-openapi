@@ -1,5 +1,13 @@
 {
-    "dependencies": {
-        "odata-csdl": "*"
-    }
+    "files": [
+        "lib/*"
+      ],
+      "bin": {
+        "odata-openapi3": "lib/cli.js"
+      },
+      "main": "lib/csdl2openapi.js",
+      "dependencies": {
+        "minimist": "^1.2.5",
+        "odata-csdl": "^0.2.9"
+      }
 }
