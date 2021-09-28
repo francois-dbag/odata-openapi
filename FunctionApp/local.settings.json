@@ -1,0 +1,12 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+      "WEBSITE_SLOT_NAME": "Production",
+      "FUNCTIONS_EXTENSION_VERSION": "~3",
+      "ScmType": "None",
+      "FUNCTIONS_RUNTIME_SCALE_MONITORING_ENABLED": "0",
+      "WEBSITE_NODE_DEFAULT_VERSION": "12.21.0",
+      "FUNCTIONS_WORKER_RUNTIME": "node",
+      "AzureWebJobsStorage": "UseDevelopmentStorage=true"
+    }
+  }
