@@ -146,7 +146,7 @@
 				}
 			}
 			fetch("https://" + document.getElementById('basic-url').value, options)
-				.then(res => res.json())
+				.then(res => res.text())
 				.then(function(response){
 					document.getElementById('exampleInputOData1').value = response
 				});
