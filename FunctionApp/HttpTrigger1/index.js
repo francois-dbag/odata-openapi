@@ -1,7 +1,7 @@
 module.exports = async function (context, req) {
     
     const csdl = require("odata-csdl");
-    const lib = require("../odata-openapi/lib/csdl2openapi");
+    const lib = require("../lib/csdl2openapi.js");
     const xml = req.body;
     const json = csdl.xml2json(xml, false);
 
