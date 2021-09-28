@@ -8,7 +8,7 @@ module.exports = async function (context, req) {
     const openapi = lib.csdl2openapi(json, {
       scheme: req.headers['x-scheme'] || "https",
       host: req.headers['x-host'] || "services.odata.org",
-      basePath: req.headers['x-basePath'] || "/service-root",
+      basePath: req.headers['x-basepath'] || "/service-root",
       diagram: true,
     });
 

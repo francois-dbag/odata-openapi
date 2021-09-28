@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Odata to OpenAPI3</title>
+		<title>OData to OpenAPI3</title>
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 	</head>
 	<body>
@@ -13,7 +13,7 @@
 			<div class="col-md-12">
 				<nav class="navbar navbar-expand-lg navbar-primary bg-light">
 					<div class="container-fluid">
-					 <a class="navbar-brand" href="#">Odata to OpenAPI3 Converter</a>
+					 <a class="navbar-brand" href="#">OData to OpenAPI3 Converter</a>
 					</div>
 				</nav>
 			</div>
@@ -25,17 +25,17 @@
 						<div class="accordion-item">
 							<h2 class="accordion-header" id="headingOne">
 							<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-								Odata Definition
+								OData Definition
 							</button>
 							</h2>
 							<div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
 								<div class="accordion-body">
 									<div class="mb-3">
-										<label for="exampleInputOdata1" class="form-label">Input Odata Definition</label>
-										<textarea class="form-control" id="exampleInputOdata1" aria-describedby="OdataHelp"></textarea>
-										<div id="OdataHelp" class="form-text">We will transmit your Odata definition to our API backend, but we will never store your Odata Definition.</div>
+										<label for="exampleInputOData1" class="form-label">Input OData Definition</label>
+										<textarea class="form-control" id="exampleInputOData1" aria-describedby="ODataHelp"></textarea>
+										<div id="ODataHelp" class="form-text">We will transmit your OData definition to our API backend, but we will never store your OData Definition.</div>
 									</div>
-									<button type="button" onclick="getConversion()" data-bs-target="#headingThree" class="btn btn-primary">Convert</button>
+									<button type="button" onclick="getConversion()" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseOne" data-bs-target="#collapseThree" class="btn btn-primary">Convert</button>
 								</div>
 							</div>
 						</div>
@@ -49,18 +49,18 @@
 								<div class="accordion-body">
 									<div class="mb-3">
 										<label for="examplescheme1" class="form-label">Optional scheme</label>
-										<input type="text" class="form-control" id="exampleinputscheme1" aria-describedby="Odatascheme" placeholder="https"/>
-										<div id="Odatascheme" class="form-text">Optionally override the scheme in your definition to a custom one.</div>
+										<input type="text" class="form-control" id="exampleinputscheme1" aria-describedby="ODatascheme" placeholder="https"/>
+										<div id="ODatascheme" class="form-text">Optionally override the scheme in your definition to a custom one.</div>
 									</div>
 									<div class="mb-3">
 										<label for="examplehost1" class="form-label">Optional Host</label>
-										<input type="text" class="form-control" id="exampleinputhost1" aria-describedby="Odatahost" placeholder="services.odata.org"/>
-										<div id="Odatahost" class="form-text">Optionally override the host in your definition to a custom one.</div>
+										<input type="text" class="form-control" id="exampleinputhost1" aria-describedby="ODatahost" placeholder="services.OData.org"/>
+										<div id="ODatahost" class="form-text">Optionally override the host in your definition to a custom one.</div>
 									</div>
 									<div class="mb-3">
 										<label for="examplebasepath1" class="form-label">Optional basepath</label>
-										<input type="text" class="form-control" id="exampleinputbasepath1" aria-describedby="Odatabasepath" placeholder="/service-root"/>
-										<div id="Odatabasepath" class="form-text">Optionally override the base path in your definition to a custom one.</div>
+										<input type="text" class="form-control" id="exampleinputbasepath1" aria-describedby="ODatabasepath" placeholder="/service-root"/>
+										<div id="ODatabasepath" class="form-text">Optionally override the base path in your definition to a custom one.</div>
 									</div>	
 								</div>
 							</div>
@@ -75,24 +75,49 @@
 								<div class="accordion-body">
 									<div class="mb-3">
 										<label for="exampleoutput1" class="form-label">Converted Result</label>
-										<textarea class="form-control" id="exampleoutput1"></textarea>
+										<textarea class="form-control" id="exampleoutput1" rows="15" style="height:100%;"></textarea>
 									</div>
+									<button type="button" onclick="copyToClipboard()" class="btn btn-primary">Copy to clipboard</button>
+									<button type="button" onclick="download()" class="btn btn-success">
+										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+											<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"></path>
+											<path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"></path>
+										</svg>
+										Download
+									  </button>
 								</div>
 							</div>
 						</div>
 					</div>
 				</form>
+				<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+					<div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+					  <div class="toast-header">
+						<strong class="me-auto">Note</strong>
+						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+					  </div>
+					  <div class="toast-body">
+						openapi spec copied to clipboard
+					  </div>
+					</div>
+				  </div>
 			</div>
 		</div>
 	</div>
+	<footer class="footer mt-auto py-3 bg-light">
+		<div class="container">
+		  <span class="text-muted">App is based upon <a href="https://github.com/oasis-tcs/OData-openapi">OASIS OData to OpenAPI converter tools</a> and provided as is. Please have a look at our <a href="https://github.com/WillEastbury/OData-openapi">open-source project</a> for further details.</span>
+		  <span class="text-muted">Post feedback and Issues on our <a href="https://github.com/WillEastbury/odata-openapi/issues">GitHub repos.</a></span>
+		</div>
+	</footer>
 	<script>
 
 		function getConversion()
 		{
-			const apilocation = "https://yourfunctionappbackend.azurewebsites.net/api/HttpTrigger1"; 
+			const apilocation = "https://odatatoopenapiconverter.azurewebsites.net/api/HttpTrigger1"; 
 			const options = {
 				method: 'POST',
-				body: document.getElementById('exampleInputOdata1').value,
+				body: document.getElementById('exampleInputOData1').value,
 				headers: {
 					'Content-Type': 'application/json',
 					'x-scheme': document.getElementById('exampleinputscheme1').value,
@@ -101,12 +126,39 @@
 				}
 			}
 			fetch(apilocation, options)
-				//.then(res => console.log(res))
 				.then(res => res.text())
 				.then(res => document.getElementById('exampleoutput1').value = res);
-			
+		
+		}
+
+		function copyToClipboard() {
+			var copyText = document.getElementById("exampleoutput1");
+			copyText.select();
+			document.execCommand("copy");
+			toast();
+		}
+
+		function download(){
+			var text = document.getElementById("exampleoutput1").value;
+			text = text.replace(/\n/g, "\r\n"); // To retain the Line breaks.
+			var blob = new Blob([text], { type: "application/json"});
+			var anchor = document.createElement("a");
+			anchor.download = "openapi-spec.json";
+			anchor.href = window.URL.createObjectURL(blob);
+			anchor.target ="_blank";
+			anchor.style.display = "none"; // just to be safe!
+			document.body.appendChild(anchor);
+			anchor.click();
+			document.body.removeChild(anchor);
+		}
+
+		function toast(){
+			var myAlert =document.getElementById('liveToast');//select id of toast
+			var bsAlert = new bootstrap.Toast(myAlert);//inizialize it
+			bsAlert.show();//show it
 		}
 	</script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
   </body>
 </html>
