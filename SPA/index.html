@@ -31,13 +31,13 @@
 							<div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
 								<div class="accordion-body">
 									<div class="mb-3">
-										<label for="basic-url" class="form-label">Link to metadata xml</label>
+										<!--<label for="basic-url" class="form-label">Link to metadata xml</label>
 										<div class="input-group mb-3">
 											<span class="input-group-text" id="basic-addon3">https://</span>
 											<input type="text" class="form-control" id="basic-url" aria-describedby="basic-addon3" placeholder="services.odata.org/v2/northwind/northwind.svc/$metadata">
 											<button type="button" onclick="importMetadata()" class="btn btn-dark">Import</button>	
-										</div>
-										<label for="exampleInputOData1" class="form-label">or manual Input of OData Definition</label>
+										</div>-->
+										<label for="exampleInputOData1" class="form-label">Manual Input of OData Definition</label>
 										<textarea class="form-control" id="exampleInputOData1" aria-describedby="ODataHelp"></textarea>
 										<div id="ODataHelp" class="form-text">We will transmit your OData definition to our API backend, but we will never store your OData Definition.</div>
 									</div>
@@ -137,7 +137,7 @@
 		
 		}
 
-		function importMetadata(){
+		/*function importMetadata(){
 			const options = {
 				method: 'GET',
 				mode: 'no-cors',
@@ -150,7 +150,7 @@
 				.then(function(response){
 					document.getElementById('exampleInputOData1').value = response
 				});
-		}
+		}*/
 
 		function copyToClipboard() {
 			var copyText = document.getElementById("exampleoutput1");
