@@ -120,7 +120,17 @@
 
 		function getConversion()
 		{
-			const apilocation = "https://convert.odata-openapi.net/api/HttpTrigger1"; 
+			var domParser = new DOMParser();
+			var XMLDocument = domParser.parseFromString(document.getElementById('exampleInputOData1').value, "text/xml");
+			var xmlRootVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:MaxDataServiceVersion");
+			var dataServicesVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:MaxDataServiceVersion");
+			
+			var apilocation = "https://convert.odata-openapi.net/api/HttpTrigger1"; 
+
+			if(dataServicesVersionValue == null){
+				apilocation = "https://convert.odata-openapi.net/apiv3/HttpTrigger1";
+			}
+			
 			const options = {
 				method: 'POST',
 				body: document.getElementById('exampleInputOData1').value,
