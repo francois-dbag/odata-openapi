@@ -106,7 +106,18 @@
 						openapi spec copied to clipboard
 					  </div>
 					</div>
-				  </div>
+				</div>
+				<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+					<div id="liveODataToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+					  <div class="toast-header">
+						<strong class="me-auto">Note</strong>
+						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+					  </div>
+					  <div id="odataversionnumber" class="toast-body">
+						
+					  </div>
+					</div>
+				</div>
 			</div>
 		</div>
 		<footer class="footer mt-auto py-3 bg-light">
@@ -122,14 +133,21 @@
 		{
 			var domParser = new DOMParser();
 			var XMLDocument = domParser.parseFromString(document.getElementById('exampleInputOData1').value, "text/xml");
-			var xmlRootVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:MaxDataServiceVersion");
+			var xmlRootVersionValue = XMLDocument.getElementsByTagName("edmx:Edmx")[0].getAttribute("Version");
 			var dataServicesVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:MaxDataServiceVersion");
-			
-			var apilocation = "https://convert.odata-openapi.net/api/HttpTrigger1"; 
+			var odataVersionValue = dataServicesVersionValue;
 
-			if(dataServicesVersionValue == null){
-				apilocation = "https://convert.odata-openapi.net/apiv3/HttpTrigger1";
+			//target Java based implementation for odata version 2
+			var apilocation = "https://convert.odata-openapi.net/apiv3/HttpTrigger1"; 
+
+			//target nodejs based implementation for odata version 3+
+			if(dataServicesVersionValue == null){ //must be v4
+				apilocation = "https://convert.odata-openapi.net/api/HttpTrigger1";
+				odataVersionValue = xmlRootVersionValue;
+			}else if( dataServicesVersionValue >= "3.0"){//must be v3
+				apilocation = "https://convert.odata-openapi.net/api/HttpTrigger1";
 			}
+			toastOData(odataVersionValue);
 			
 			const options = {
 				method: 'POST',
@@ -185,6 +203,13 @@
 
 		function toast(){
 			var myAlert =document.getElementById('liveToast');//select id of toast
+			var bsAlert = new bootstrap.Toast(myAlert);//inizialize it
+			bsAlert.show();//show it
+		}
+
+		function toastOData(odataVersionValue){
+			var myAlert = document.getElementById('liveODataToast');//select id of toast
+			document.getElementById('odataversionnumber').innerHTML = "Detected OData version: " + odataVersionValue;
 			var bsAlert = new bootstrap.Toast(myAlert);//inizialize it
 			bsAlert.show();//show it
 		}
