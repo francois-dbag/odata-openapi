@@ -11,6 +11,7 @@ module.exports = async function (context, req) {
     var responseMessage = "OK";
     var odataVersionTrace = "not set";
     var openapi;
+    
     //check OData version to feed to correct target conversion approach as described by Oasis
     if (json.$Version < "3.0") {
       odataVersionTrace = "OData version < 3.0 converting to v4 using xslt4node";
@@ -48,7 +49,9 @@ module.exports = async function (context, req) {
               );
             }
       });
-    }else{
+    }
+    else
+    {
       odataVersionTrace = "OData version >= 3.0 using csdl2openapi converter";
     }
     //do conversion only if no errors
@@ -67,4 +70,6 @@ module.exports = async function (context, req) {
         headers: {'content-type': 'application/json', 'odata-version-trace': odataVersionTrace},
         body: responseMessage
     };
+
 }
+
