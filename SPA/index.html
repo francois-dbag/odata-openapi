@@ -40,6 +40,22 @@
 										<label for="exampleInputOData1" class="form-label">Manual Input of OData Definition</label>
 										<textarea class="form-control" id="exampleInputOData1" aria-describedby="ODataHelp"></textarea>
 										<div id="ODataHelp" class="form-text">We will transmit your OData definition to our API backend, but we will never store your OData Definition.</div>
+										<br/>
+										<div class="mb-3">
+											<div id="featureSwitches" class="form-text">Optional feature switches to cater for consumer connector requirements (e.g. Microsoft PowerAutomate).</div>
+											<div class="row">
+												<div class="col">
+													<div class="form-check form-switch">
+														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchSwagger">
+														<label class="form-check-label" for="flexSwitchCheckDefault">Override swagger version 3 with 2.</label>
+													</div>
+													<div class="form-check form-switch">
+														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTagsEnrich">
+														<label class="form-check-label" for="flexSwitchCheckDefault">Enrich section 'tags' with description value.</label>
+													</div>
+												</div>
+											</div>
+										</div>
 									</div>
 									<button type="button" onclick="getConversion()" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseOne" data-bs-target="#collapseThree" class="btn btn-primary">Convert</button>
 								</div>
@@ -97,13 +113,13 @@
 					</div>
 				</form>
 				<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-					<div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+					<div id="liveDownloadToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
 					  <div class="toast-header">
 						<strong class="me-auto">Note</strong>
 						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
 					  </div>
 					  <div class="toast-body">
-						openapi spec copied to clipboard
+						Download in progress. Please wait.
 					  </div>
 					</div>
 				</div>
@@ -138,6 +154,10 @@
 			var dataServicesVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:DataServiceVersion");
 			var odataVersionValue = dataServicesVersionValue;
 
+			
+			var swaggerChangeEnabled = $('#flexSwitchSwagger').is(':checked');
+			var tagsEnrichEnabled = $('#flexSwitchTagsEnrich').is(':checked');
+
 			//target c# based implementation for odata version 2
 			var apilocation = "https://convert.odata-openapi.net/apiv2/HttpTrigger1"; 
 
@@ -154,7 +174,7 @@
 			}
 			toastOData(odataVersionValue);
 			
-			const options = {
+			var options = {
 				method: 'POST',
 				body: document.getElementById('exampleInputOData1').value,
 				headers: {
@@ -164,10 +184,17 @@
 					'x-host': document.getElementById('exampleinputhost1').value
 				}
 			}
+			//add features if enabled
+			if(swaggerChangeEnabled){
+				options.headers['x-openapi-version'] = "2.0";
+			}
+			if(tagsEnrichEnabled){
+				options.headers['x-openapi-enrich-tags'] = "true";
+			}
+
 			fetch(apilocation, options)
 				.then(res => res.text())
 				.then(res => document.getElementById('exampleoutput1').value = res);
-		
 		}
 
 		/*function importMetadata(){
@@ -193,6 +220,7 @@
 		}
 
 		function download(){
+			toastDownload();
 			var text = document.getElementById("exampleoutput1").value;
 			text = text.replace(/\n/g, "\r\n"); // To retain the Line breaks.
 			var blob = new Blob([text], { type: "application/json"});
@@ -215,6 +243,12 @@
 		function toastOData(odataVersionValue){
 			var myAlert = document.getElementById('liveODataToast');//select id of toast
 			document.getElementById('odataversionnumber').innerHTML = "Detected OData version: " + odataVersionValue;
+			var bsAlert = new bootstrap.Toast(myAlert);//inizialize it
+			bsAlert.show();//show it
+		}
+
+		function toastDownload(){
+			var myAlert = document.getElementById('liveDownloadToast');//select id of toast
 			var bsAlert = new bootstrap.Toast(myAlert);//inizialize it
 			bsAlert.show();//show it
 		}
