@@ -134,18 +134,23 @@
 			var domParser = new DOMParser();
 			var XMLDocument = domParser.parseFromString(document.getElementById('exampleInputOData1').value, "text/xml");
 			var xmlRootVersionValue = XMLDocument.getElementsByTagName("edmx:Edmx")[0].getAttribute("Version");
-			var dataServicesVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:MaxDataServiceVersion");
+			var dataServicesMaxVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:MaxDataServiceVersion");
+			var dataServicesVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:DataServiceVersion");
 			var odataVersionValue = dataServicesVersionValue;
 
-			//target Java based implementation for odata version 2
-			var apilocation = "https://convert.odata-openapi.net/apiv3/HttpTrigger1"; 
+			//target c# based implementation for odata version 2
+			var apilocation = "https://convert.odata-openapi.net/apiv2/HttpTrigger1"; 
 
 			//target nodejs based implementation for odata version 3+
-			if(dataServicesVersionValue == null){ //must be v4
-				apilocation = "https://convert.odata-openapi.net/api/HttpTrigger1";
+			if(dataServicesVersionValue == null && dataServicesMaxVersionValue == null){ //must be v4
+				apilocation = "https://convert.odata-openapi.net/apiv34/HttpTrigger1";
 				odataVersionValue = xmlRootVersionValue;
+			}else if( dataServicesMaxVersionValue >= "3.0"){//must be v3
+				apilocation = "https://convert.odata-openapi.net/apiv34/HttpTrigger1";
+				odataVersionValue = dataServicesMaxVersionValue
 			}else if( dataServicesVersionValue >= "3.0"){//must be v3
-				apilocation = "https://convert.odata-openapi.net/api/HttpTrigger1";
+				apilocation = "https://convert.odata-openapi.net/apiv34/HttpTrigger1";
+				odataVersionValue = dataServicesVersionValue;
 			}
 			toastOData(odataVersionValue);
 			
