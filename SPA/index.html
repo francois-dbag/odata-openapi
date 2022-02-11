@@ -188,9 +188,7 @@
 			if(swaggerChangeEnabled){
 				options.headers['x-openapi-version'] = "2.0";
 			}
-			if(tagsEnrichEnabled){
-				options.headers['x-openapi-enrich-tags'] = "true";
-			}
+			options.headers['x-openapi-enrich-tags'] = "" + tagsEnrichEnabled;
 
 			fetch(apilocation, options)
 				.then(res => res.text())
