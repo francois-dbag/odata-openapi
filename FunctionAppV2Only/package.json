@@ -9,7 +9,6 @@
   "dependencies": {
     "minimist": "^1.2.5",
     "odata-csdl": "^0.2.9",
-    "xslt4node": "^0.3.2",
-    "node-gyp": "*"
+    "xslt4node": "^0.3.2"
   }
 }
