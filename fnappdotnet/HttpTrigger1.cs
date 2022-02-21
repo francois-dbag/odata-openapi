@@ -59,6 +59,7 @@ namespace Company.Function
                 args.AddParam("openapi-version","" , req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0");   
                 string transformoutput = ApplyTransform(v4OdataXml, v4cdsltoopenapixsl, args);
                 JObject openapi = JObject.Parse(transformoutput);
+
                 if (bool.Parse(req.Headers["x-openapi-enrich-tags"].FirstOrDefault() ?? "false"))
                 {
                     // Monkey Patch the Missing Description for Power Platform
@@ -173,6 +174,7 @@ namespace Company.Function
                         // ],
                         // "nullable": true,
                         // "format": "decimal",
+                        
                         jtroot = openapi["components"]["schemas"]; 
                         foreach (JProperty jdefinition in jtroot)
                         {
@@ -235,6 +237,8 @@ namespace Company.Function
                                     if (jrestmethod["patch"]  != null) processme |= ProcessMe.patch;
                                     if (jrestmethod["delete"] != null) processme |= ProcessMe.delete;
                                     if (jrestmethod["get"]    != null) processme |= ProcessMe.get;
+                                    if (jrestmethod["put"]    != null) processme |= ProcessMe.put;
+                                    if (jrestmethod["post"]   != null) processme |= ProcessMe.post;
                                     if (processme.HasFlag(ProcessMe.patch))
                                     {
                                         ProcessPatchOrDelete(jrestmethod, "patch");
