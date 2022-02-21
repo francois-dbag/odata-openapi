@@ -9,9 +9,9 @@ using System.Xml.Xsl;
 using System.Xml;
 using System.Linq;
 using System;
+using Newtonsoft.Json; 
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-
 namespace Company.Function
 {
     public static class HttpTrigger1
@@ -22,6 +22,7 @@ namespace Company.Function
         {
             string root = ""; 
             string patchToWhat = System.Environment.GetEnvironmentVariable("PatchToWhat") ?? "number";
+
             if (bool.Parse(System.Environment.GetEnvironmentVariable("OverrideLocalTransformFilesInRoot") ?? "false"))
             {
                 root = $"{System.Environment.GetEnvironmentVariable("HOME")}{Path.DirectorySeparatorChar}";
@@ -45,11 +46,9 @@ namespace Company.Function
                     log.LogInformation("First run completed, transforms loaded and compiled.");
                 }
                 log.LogInformation("Converting to v4");
-
                 // Convert it to V4 OData First, then convert to OData, then return
                 string v4OdataXml = ApplyTransform(await req.ReadAsStringAsync(), v2toV4xsl);
                 // string versionod = ApplyTransform(v4OdataXml,csdltoodataversion);
-
                 var args = new XsltArgumentList() ;
                 args.AddParam("scheme","", req.Headers["x-scheme"].FirstOrDefault() ?? "https");
                 args.AddParam("host","",req.Headers["x-host"].FirstOrDefault() ?? "services.odata.org");
@@ -58,10 +57,8 @@ namespace Company.Function
                 args.AddParam("diagram","","YES");
                 args.AddParam("openapi-root","", "https://raw.githubusercontent.com/oasis-tcs/odata-openapi/master/examples/");     
                 args.AddParam("openapi-version","" , req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0");   
-
                 string transformoutput = ApplyTransform(v4OdataXml, v4cdsltoopenapixsl, args);
                 JObject openapi = JObject.Parse(transformoutput);
-                
                 if (bool.Parse(req.Headers["x-openapi-enrich-tags"].FirstOrDefault() ?? "false"))
                 {
                     // Monkey Patch the Missing Description for Power Platform
@@ -71,7 +68,6 @@ namespace Company.Function
                         item.Property("name").AddAfterSelf(new JProperty("description", item.GetValue("name").ToString()));
                     }
                 }
-
                 if (bool.Parse(req.Headers["x-openapi-enrich-decimals"].FirstOrDefault() ?? "false"))
                 {
                     // Monkey Patch the Weird decimal scenario to assist with OData to OpenAPI representation
@@ -79,7 +75,8 @@ namespace Company.Function
                     // and Power Platform has an issue with the converter's output IF there is an EDM:Decimal in the OData spec.
                     JToken jtroot = null; 
                     var PatchList = new List<PatchData>(); 
-
+                    // Info/Description parse and truncate to 1000 characters
+                    openapi["info"]["description"] = new JValue(openapi["info"]["description"].Value<string>().Substring(0,1000));
                     if ((req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0").StartsWith("2.0"))
                     {
                         // OpenAPI2.0 (Swagger)
@@ -91,8 +88,7 @@ namespace Company.Function
                         //              ],
                         //          "format": "decimal"
                         //         },
-                         jtroot = openapi["definitions"];                     
-                                                   
+                        jtroot = openapi["definitions"];                     
                         foreach (JProperty jdefinition in jtroot)
                         {
                             // At this point we are looping through each object definition (So in each of definitions['x'])
@@ -104,13 +100,11 @@ namespace Company.Function
                                     {
                                         foreach (var propertyfieldinner3 in propertyfieldinner2) // Now we are looking through the fields of that object 
                                         {
-
                                             // Now parse the type and format of that object
                                             bool isString = propertyfieldinner3["type"]?.ToString() == "string"; 
                                             bool hasDecimal = propertyfieldinner3["format"]?.ToString() == "decimal"; 
                                             bool isArrayAndHasString = false;
                                             bool isNullable = false;
-                                            
                                             // If the type property is an array then parse the array values to check for a string value
                                             // IsString will be true if there is only one property called 'string'.
                                             // But here we look for that value as an element in the array
@@ -128,7 +122,6 @@ namespace Company.Function
                                                     }
                                                 }
                                             }
-
                                             // Detection complete, time to monkey-patch the json and replace the string type with a float type
                                             if (hasDecimal)
                                             {
@@ -138,7 +131,6 @@ namespace Company.Function
                                                     IsArrayAndHasString = isArrayAndHasString,
                                                     IsNullable = isNullable
                                                 });
-
                                                 log.LogInformation($"{propertyfieldinner3["type"].Path}, IsString: {isString}, IsArrayAndHasString: {isArrayAndHasString}, IsNullable: isNullable");
                                             }
                                         }
@@ -146,17 +138,15 @@ namespace Company.Function
                                 }
                             }
                         }
-                    
                         // We need to do the actual patching here. 
                         foreach (PatchData patchme in PatchList)
                         {
-
                             if (openapi.SelectToken(patchme.Path, true).Count() > 1)
                             {
                                 JArray tmparray = new JArray(); 
                                 foreach (JValue jv in (JArray) openapi.SelectToken(patchme.Path, true))
                                 {
-                                    if (jv.ToString() != "string" && jv.ToString() != "null") tmparray.Add(jv);
+                                    if (jv.ToString() != "integer" && jv.ToString() != "null") tmparray.Add(jv);
                                 }
                                 // tmparray.Add(new JValue(patchToWhat));
                                 openapi.SelectToken(patchme.Path, true).Replace(tmparray);
@@ -166,12 +156,9 @@ namespace Company.Function
                                 openapi.SelectToken(patchme.Path, true)["type"].Remove();
                                 var old = (JProperty) openapi.SelectToken(patchme.Path, true);
                                 old.Add(new JProperty("type", new JValue(patchToWhat))); 
-                                
                             }
                         }
-
                     }
-                       
                     if ((req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0").StartsWith("3.0"))
                     {
                         // OpenAPI3.0
@@ -186,9 +173,7 @@ namespace Company.Function
                         // ],
                         // "nullable": true,
                         // "format": "decimal",
-
                         jtroot = openapi["components"]["schemas"]; 
-
                         foreach (JProperty jdefinition in jtroot)
                         {
                             // At this point we are looping through each object definition (So in each of definitions['x'])
@@ -206,9 +191,7 @@ namespace Company.Function
                                                 // Now parse the type and format of that object
                                                 bool hasDecimal = propertyfieldinner3["format"]?.ToString() == "decimal"; 
                                                 bool isArrayAndHasString = false;
-
                                                 JArray typesanyof = (JArray) propertyfieldinner3["anyOf"] ?? new JArray(); 
-
                                                 foreach (JObject typedescr in typesanyof)
                                                 {
                                                     if (typedescr.GetValue("type").ToString() == "string") 
@@ -216,7 +199,6 @@ namespace Company.Function
                                                              isArrayAndHasString = true;
                                                     }
                                                 }
-
                                                 // Detection complete, time to monkey-patch the json and replace the string type with a float type
                                                 if (hasDecimal)
                                                 {
@@ -224,58 +206,85 @@ namespace Company.Function
                                                         Path = propertyfieldinner3["anyOf"].Path, 
                                                         IsArrayAndHasString = isArrayAndHasString,
                                                     });
-
                                                     log.LogInformation($"{propertyfieldinner3["anyOf"].Path}, IsArrayAndHasString: {isArrayAndHasString}");
                                                 }
-                                                
                                             }
-
                                         }
                                     }
                                 }
                             }
                         }
-
-                        // We need to do the actual patching here. 
+                        
+                        // We need to do the actual patching here - Remove the array anyOf, then remove the multipleOf property, then add the singular type property.
                         foreach (PatchData patchme in PatchList)
                         {
-                            if (patchme.IsArrayAndHasString)
+                            ((JArray)openapi.SelectToken(patchme.Path, true)).Parent.Remove();
+                            ((JValue)openapi.SelectToken(patchme.Path.Replace("anyOf","multipleOf"), true)).Parent.Remove();
+                            ((JObject)openapi.SelectToken(patchme.Path.Replace(".anyOf",""), true)).Add(new JProperty("type", new JValue(patchToWhat)));
+                        }
+
+                        if (bool.Parse(req.Headers["x-openapi-enrich-ifmatchtag"].FirstOrDefault() ?? "false"))
+                        {
+                            // var operationlist = new List<PatchData>(); 
+                            // Find the PATCH and DELETE operations and monkeypatch in the if-match header to hold the etag
+                            foreach (JProperty jpath in openapi["paths"])
                             {
-                                JArray tmparray = new JArray(); 
-                                foreach (JObject jv in (JArray) openapi.SelectToken(patchme.Path, true))
-                                {                              
-
-                                    if (jv.GetValue("type").ToString() != "string" && jv.GetValue("type").ToString() != "null") tmparray.Add(jv);
-
-                                }
-
-                                if (tmparray.Count() != 1) // if this is zero the structure changes from an anyOf array to simply a 'type' property.
+                                foreach (JObject jrestmethod in jpath)    // At this point we are looping through each each rest method
                                 {
-                                    // JObject patch = new JObject();
-                                    // patch.Add("type", new JValue(patchToWhat));
-                                    // tmparray.Add(patch);
-                                    openapi.SelectToken(patchme.Path, true).Replace(tmparray);
-                                }
-                                else
-                                {
-                                    var old = openapi.SelectToken(patchme.Path, true).Parent.Parent;
-                                    old.AddFirst(new JProperty("type", new JValue(patchToWhat))); 
-                                    openapi.SelectToken(patchme.Path, true).Parent.Remove();
+                                    ProcessMe processme = ProcessMe.dontprocess; 
+                                    if (jrestmethod["patch"]  != null) processme |= ProcessMe.patch;
+                                    if (jrestmethod["delete"] != null) processme |= ProcessMe.delete;
+                                    if (jrestmethod["get"]    != null) processme |= ProcessMe.get;
+                                    if (processme.HasFlag(ProcessMe.patch))
+                                    {
+                                        ProcessPatchOrDelete(jrestmethod, "patch");
+                                    }
+                                    if (processme.HasFlag(ProcessMe.delete))
+                                    {
+                                        ProcessPatchOrDelete(jrestmethod, "delete");
+                                    }
                                 }
                             }
                         }
                     }
                 }
-
                 string transformfinal = openapi.ToString();
                 return new OkObjectResult(transformfinal);
-
             }
             catch (Exception ex)
             {
                 return new BadRequestObjectResult($"An Error Occurred handling your request. \r\n{ex.Source} \r\n\r\n{ex.Message} \r\n\r\n Running from {root}");
             }
         }
+
+        private static void ProcessPatchOrDelete(JObject jrestmethod, string processme)
+        {
+            // Check to see if the parameters jarray exists
+            JArray jsonparams;
+            if (jrestmethod[processme]?["parameters"] != null)
+            {
+                jsonparams = (JArray)jrestmethod[processme]?["parameters"];
+            }
+            else
+            {
+                jsonparams = new JArray();
+                ((JObject)jrestmethod[processme]).Add(new JProperty("parameters", jsonparams));
+            }
+            
+            // Add a JObject for the if-match etag check header
+            var paramobj = new JObject();
+            paramobj.Add("name", "if-match");
+            paramobj.Add("in", "header");
+            paramobj.Add("required", true);
+            paramobj.Add("schema", new JObject(new JProperty("type", "string")));
+            paramobj.Add("x-ms-visibility", "important");
+            paramobj.Add("x-ms-summary", "Place the eTag value for optimistic concurrency control in this header");
+
+            // Add to the array
+            jsonparams.Add(paramobj);
+            
+        }
+
         public static string ApplyTransform(string input, XslCompiledTransform xslTrans, XsltArgumentList args = null)
         {
             using (StringReader str = new StringReader(input))
@@ -292,6 +301,16 @@ namespace Company.Function
         }
     }
 
+    [Flags()]
+    public enum ProcessMe
+    {
+        dontprocess = 0,
+        get = 1,
+        post = 2, 
+        put = 4,
+        delete = 8,
+        patch = 16
+    }
     public class PatchData
     {
         public string Path { get; set; } 

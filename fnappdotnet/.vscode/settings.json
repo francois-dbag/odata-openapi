@@ -3,5 +3,11 @@
     "azureFunctions.projectLanguage": "C#",
     "azureFunctions.projectRuntime": "~3",
     "debug.internalConsoleOptions": "neverOpen",
-    "azureFunctions.preDeployTask": "publish (functions)"
+    "azureFunctions.preDeployTask": "publish (functions)",
+    "cSpell.words": [
+        "dontprocess",
+        "jrestmethod",
+        "jtdesc",
+        "processme"
+    ]
 }
