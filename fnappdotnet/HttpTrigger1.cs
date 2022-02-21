@@ -21,7 +21,7 @@ namespace Company.Function
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req, ILogger log)
         {
             string root = ""; 
-            string patchToWhat = System.Environment.GetEnvironmentVariable("PatchToWhat") ?? "float";
+            string patchToWhat = System.Environment.GetEnvironmentVariable("PatchToWhat") ?? "number";
             if (bool.Parse(System.Environment.GetEnvironmentVariable("OverrideLocalTransformFilesInRoot") ?? "false"))
             {
                 root = $"{System.Environment.GetEnvironmentVariable("HOME")}{Path.DirectorySeparatorChar}";
@@ -150,20 +150,23 @@ namespace Company.Function
                         // We need to do the actual patching here. 
                         foreach (PatchData patchme in PatchList)
                         {
-                            if (patchme.IsString)
-                            {
-                                openapi.SelectToken(patchme.Path, true).Replace(new JValue(patchToWhat));
-                            }
 
-                            else if (patchme.IsArrayAndHasString)
+                            if (openapi.SelectToken(patchme.Path, true).Count() > 1)
                             {
                                 JArray tmparray = new JArray(); 
                                 foreach (JValue jv in (JArray) openapi.SelectToken(patchme.Path, true))
                                 {
-                                    if (jv.ToString() != "string" && jv.ToString() != "number") tmparray.Add(jv);
+                                    if (jv.ToString() != "string" && jv.ToString() != "null") tmparray.Add(jv);
                                 }
-                                tmparray.Add(new JValue(patchToWhat));
+                                // tmparray.Add(new JValue(patchToWhat));
                                 openapi.SelectToken(patchme.Path, true).Replace(tmparray);
+                            }
+                            else
+                            {
+                                openapi.SelectToken(patchme.Path, true)["type"].Remove();
+                                var old = (JProperty) openapi.SelectToken(patchme.Path, true);
+                                old.Add(new JProperty("type", new JValue(patchToWhat))); 
+                                
                             }
                         }
 
@@ -242,14 +245,15 @@ namespace Company.Function
                                 foreach (JObject jv in (JArray) openapi.SelectToken(patchme.Path, true))
                                 {                              
 
-                                    if (jv.GetValue("type").ToString() != "string" && jv.GetValue("type").ToString() != "number") tmparray.Add(jv);
+                                    if (jv.GetValue("type").ToString() != "string" && jv.GetValue("type").ToString() != "null") tmparray.Add(jv);
 
                                 }
-                                if (tmparray.Count() != 0) // if this is zero the structure changes from an anyOf array to simply a 'type' property.
+
+                                if (tmparray.Count() != 1) // if this is zero the structure changes from an anyOf array to simply a 'type' property.
                                 {
-                                    JObject patch = new JObject();
-                                    patch.Add("type", new JValue(patchToWhat));
-                                    tmparray.Add(patch);
+                                    // JObject patch = new JObject();
+                                    // patch.Add("type", new JValue(patchToWhat));
+                                    // tmparray.Add(patch);
                                     openapi.SelectToken(patchme.Path, true).Replace(tmparray);
                                 }
                                 else
