@@ -16,7 +16,7 @@ namespace Company.Function
 {
     public static class HttpTrigger1
     {
-        static XslCompiledTransform v2toV4xsl, v4cdsltoopenapixsl, csdltoodataversion; 
+        static XslCompiledTransform v2toV4xsl, v4CSDLToOpenAPIXslt, CSDLToODataVersion; 
         [FunctionName("HttpTrigger1")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req, ILogger log)
         {
@@ -33,32 +33,44 @@ namespace Company.Function
             }
             try
             {
+
                 log.LogInformation("C# HTTP trigger function processed a request to convert OData to OpenAPI");
                 if (v2toV4xsl == null)
                 {
                     log.LogInformation("First run on this host - caching stylesheets and transforms from " + root);
                     v2toV4xsl = new XslCompiledTransform();
                     v2toV4xsl.Load(root + "V2-to-V4-CSDL.xsl");
-                    v4cdsltoopenapixsl = new XslCompiledTransform();
-                    v4cdsltoopenapixsl.Load(root + "V4-CSDL-to-OpenAPI.xsl"); 
-                    csdltoodataversion = new XslCompiledTransform();
-                    csdltoodataversion.Load(root + "OData-Version.xsl"); 
+                    v4CSDLToOpenAPIXslt = new XslCompiledTransform();
+                    v4CSDLToOpenAPIXslt.Load(root + "V4-CSDL-to-OpenAPI.xsl"); 
+                    CSDLToODataVersion = new XslCompiledTransform();
+                    CSDLToODataVersion.Load(root + "OData-Version.xsl"); 
                     log.LogInformation("First run completed, transforms loaded and compiled.");
                 }
+
                 log.LogInformation("Converting to v4");
+
                 // Convert it to V4 OData First, then convert to OData, then return
                 string v4OdataXml = ApplyTransform(await req.ReadAsStringAsync(), v2toV4xsl);
-                // string versionod = ApplyTransform(v4OdataXml,csdltoodataversion);
+
                 var args = new XsltArgumentList() ;
                 args.AddParam("scheme","", req.Headers["x-scheme"].FirstOrDefault() ?? "https");
                 args.AddParam("host","",req.Headers["x-host"].FirstOrDefault() ?? "services.odata.org");
                 args.AddParam("basePath","",req.Headers["x-basepath"].FirstOrDefault() ?? "/service-root");
-                args.AddParam("odata-version","","2.0.0");
+                args.AddParam("odata-version","","2.0"); // Could use ApplyTransform(v4OdataXml, CSDLToODataVersion) here; 
                 args.AddParam("diagram","","YES");
                 args.AddParam("openapi-root","", "https://raw.githubusercontent.com/oasis-tcs/odata-openapi/master/examples/");     
-                args.AddParam("openapi-version","" , req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0");   
-                string transformoutput = ApplyTransform(v4OdataXml, v4cdsltoopenapixsl, args);
+                args.AddParam("openapi-version","" , req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0"); 
+
+                string transformoutput = ApplyTransform(v4OdataXml, v4CSDLToOpenAPIXslt, args);
                 JObject openapi = JObject.Parse(transformoutput);
+                
+                var PatchList = new List<PatchData>(); 
+
+                if (bool.Parse(req.Headers["x-openapi-truncate-description"].FirstOrDefault() ?? "false"))
+                {
+                    // Info/Description parse and truncate to 1000 characters
+                    openapi["info"]["description"] = new JValue(openapi["info"]["description"].Value<string>().Substring(0,1000));
+                }
 
                 if (bool.Parse(req.Headers["x-openapi-enrich-tags"].FirstOrDefault() ?? "false"))
                 {
@@ -69,15 +81,68 @@ namespace Company.Function
                         item.Property("name").AddAfterSelf(new JProperty("description", item.GetValue("name").ToString()));
                     }
                 }
+               
+                if (bool.Parse(req.Headers["x-openapi-add-metadata-etags"].FirstOrDefault() ?? "false") && (req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0").StartsWith("3.0"))
+                {
+                    foreach (JProperty JSchemaDefinitions in openapi["components"]["schemas"])
+                    {
+                        foreach (JProperty JPropertyObject in JSchemaDefinitions.Value)
+                        {
+                            if(JPropertyObject.Name == "properties") // Now we are looking for a child property object (So components/schemas['x'].properties)
+                            {
+                                ((JObject)JPropertyObject.Value).AddFirst(
+                                    new JProperty("__metadata", 
+                                        new JObject(
+                                            new JProperty("type", "object"), 
+                                            new JProperty("properties", 
+                                                new JObject(
+                                                    new JProperty(
+                                                        "etag", 
+                                                        new JObject(
+                                                            new JProperty("nullable", true), 
+                                                            new JProperty("type","string")
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                );
+                            }
+                        }
+                    }
+                }
+
+                if (bool.Parse(req.Headers["x-openapi-ifmatch"].FirstOrDefault() ?? "false"))
+                {
+                    // var operationlist = new List<PatchData>(); 
+                    // Find the PATCH and DELETE operations and monkeypatch in the if-match header to hold the etag
+                    foreach (JProperty JPropertyPath in openapi["paths"])
+                    {
+                        foreach (JObject JObjectRESTMethod in JPropertyPath)    // At this point we are looping through each each rest method
+                        {
+                            ProcessMe processme = ProcessMe.dontprocess; 
+                            if (JObjectRESTMethod["patch"]  != null) processme |= ProcessMe.patch;
+                            if (JObjectRESTMethod["delete"] != null) processme |= ProcessMe.delete;
+                            if (JObjectRESTMethod["get"]    != null) processme |= ProcessMe.get;
+                            if (JObjectRESTMethod["put"]    != null) processme |= ProcessMe.put;
+                            if (JObjectRESTMethod["post"]   != null) processme |= ProcessMe.post;
+                            if (processme.HasFlag(ProcessMe.patch))
+                            {
+                                ProcessPatchOrDelete(JObjectRESTMethod, "patch");
+                            }
+                            if (processme.HasFlag(ProcessMe.delete))
+                            {
+                                ProcessPatchOrDelete(JObjectRESTMethod, "delete");
+                            }
+                        }
+                    }
+                }
+
                 if (bool.Parse(req.Headers["x-openapi-enrich-decimals"].FirstOrDefault() ?? "false"))
                 {
                     // Monkey Patch the Weird decimal scenario to assist with OData to OpenAPI representation
-                    // (OpenAPI's types are based on JSON Schema which has no concept of a 'decimal' data type)
-                    // and Power Platform has an issue with the converter's output IF there is an EDM:Decimal in the OData spec.
-                    JToken jtroot = null; 
-                    var PatchList = new List<PatchData>(); 
-                    // Info/Description parse and truncate to 1000 characters
-                    openapi["info"]["description"] = new JValue(openapi["info"]["description"].Value<string>().Substring(0,1000));
+                    // remove the multipleOf representation so powerplatform can import it. 
                     if ((req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0").StartsWith("2.0"))
                     {
                         // OpenAPI2.0 (Swagger)
@@ -89,35 +154,35 @@ namespace Company.Function
                         //              ],
                         //          "format": "decimal"
                         //         },
-                        jtroot = openapi["definitions"];                     
-                        foreach (JProperty jdefinition in jtroot)
+                        var JTRoot = openapi["definitions"];                     
+                        foreach (JProperty JDefinition in JTRoot)
                         {
                             // At this point we are looping through each object definition (So in each of definitions['x'])
-                            foreach (JProperty jpropertyobject in jdefinition.Value)
+                            foreach (JProperty JPropertyObject in JDefinition.Value)
                             {
-                                if(jpropertyobject.Name == "properties") // Now we are looking for a child property object (So definitions['x'].properties)
+                                if(JPropertyObject.Name == "properties") // Now we are looking for a child property object (So definitions['x'].properties)
                                 {
-                                    foreach (JProperty propertyfieldinner2 in jpropertyobject.Value)
+                                    foreach (JProperty JPropertyFieldInnerProperty in JPropertyObject.Value)
                                     {
-                                        foreach (var propertyfieldinner3 in propertyfieldinner2) // Now we are looking through the fields of that object 
+                                        foreach (var JPropertyFieldInnerPropertyProperty in JPropertyFieldInnerProperty) // Now we are looking through the fields of that object 
                                         {
                                             // Now parse the type and format of that object
-                                            bool isString = propertyfieldinner3["type"]?.ToString() == "string"; 
-                                            bool hasDecimal = propertyfieldinner3["format"]?.ToString() == "decimal"; 
+                                            bool isString = JPropertyFieldInnerPropertyProperty["type"]?.ToString() == "string"; 
+                                            bool hasDecimal = JPropertyFieldInnerPropertyProperty["format"]?.ToString() == "decimal"; 
                                             bool isArrayAndHasString = false;
                                             bool isNullable = false;
                                             // If the type property is an array then parse the array values to check for a string value
                                             // IsString will be true if there is only one property called 'string'.
                                             // But here we look for that value as an element in the array
-                                            if(!isString && (propertyfieldinner3["type"]?.Count() > 1))
+                                            if(!isString && (JPropertyFieldInnerPropertyProperty["type"]?.Count() > 1))
                                             {
-                                                foreach (var prop in propertyfieldinner3["type"])
+                                                foreach (var JPropertyType in JPropertyFieldInnerPropertyProperty["type"])
                                                 {
-                                                    if(prop.ToString() == "null")
+                                                    if(JPropertyType.ToString() == "null")
                                                     {
                                                         isNullable = true;
                                                     }
-                                                    if(prop.ToString() == "string") 
+                                                    if(JPropertyType.ToString() == "string") 
                                                     {
                                                         isArrayAndHasString = true;
                                                     }
@@ -127,12 +192,12 @@ namespace Company.Function
                                             if (hasDecimal)
                                             {
                                                 PatchList.Add(new PatchData() {
-                                                    Path = propertyfieldinner3["type"].Path, 
+                                                    Path = JPropertyFieldInnerPropertyProperty["type"].Path, 
                                                     IsString = isString,
                                                     IsArrayAndHasString = isArrayAndHasString,
                                                     IsNullable = isNullable
                                                 });
-                                                log.LogInformation($"{propertyfieldinner3["type"].Path}, IsString: {isString}, IsArrayAndHasString: {isArrayAndHasString}, IsNullable: isNullable");
+                                                log.LogInformation($"{JPropertyFieldInnerPropertyProperty["type"].Path}, IsString: {isString}, IsArrayAndHasString: {isArrayAndHasString}, IsNullable: isNullable");
                                             }
                                         }
                                     }
@@ -140,61 +205,51 @@ namespace Company.Function
                             }
                         }
                         // We need to do the actual patching here. 
-                        foreach (PatchData patchme in PatchList)
+                        foreach (PatchData PatchItem in PatchList)
                         {
-                            if (openapi.SelectToken(patchme.Path, true).Count() > 1)
+                            if (openapi.SelectToken(PatchItem.Path, true).Count() > 1)
                             {
-                                JArray tmparray = new JArray(); 
-                                foreach (JValue jv in (JArray) openapi.SelectToken(patchme.Path, true))
+                                JArray JArrayTypes = new JArray(); 
+                                foreach (JValue jv in (JArray) openapi.SelectToken(PatchItem.Path, true))
                                 {
-                                    if (jv.ToString() != "integer" && jv.ToString() != "null") tmparray.Add(jv);
+                                    if (jv.ToString() != "integer" && jv.ToString() != "null") JArrayTypes.Add(jv);
                                 }
-                                // tmparray.Add(new JValue(patchToWhat));
-                                openapi.SelectToken(patchme.Path, true).Replace(tmparray);
+                                openapi.SelectToken(PatchItem.Path, true).Replace(JArrayTypes);
                             }
                             else
                             {
-                                openapi.SelectToken(patchme.Path, true)["type"].Remove();
-                                var old = (JProperty) openapi.SelectToken(patchme.Path, true);
+                                openapi.SelectToken(PatchItem.Path, true)["type"].Remove();
+                                var old = (JProperty) openapi.SelectToken(PatchItem.Path, true);
                                 old.Add(new JProperty("type", new JValue(patchToWhat))); 
                             }
+
+                            ((JValue)openapi.SelectToken(PatchItem.Path.Replace("anyOf","multipleOf"), true)).Parent.Remove();
                         }
                     }
+
                     if ((req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0").StartsWith("3.0"))
                     {
-                        // OpenAPI3.0
-                        // WeightMeasure": {
-                        // "anyOf": [
-                        //     {
-                        //         "type": "number"
-                        //     },
-                        //     {
-                        //         "type": "string"
-                        //     }
-                        // ],
-                        // "nullable": true,
-                        // "format": "decimal",
-                        
-                        jtroot = openapi["components"]["schemas"]; 
-                        foreach (JProperty jdefinition in jtroot)
+                        var JTokenRoot = openapi["components"]["schemas"]; 
+                        foreach (JProperty JSchemaDefinition in JTokenRoot)
                         {
                             // At this point we are looping through each object definition (So in each of definitions['x'])
-                            foreach (JProperty jpropertyobject in jdefinition.Value)
+                            foreach (JProperty JPropertyObject in JSchemaDefinition.Value)
                             {
-                                if(jpropertyobject.Name == "properties") // Now we are looking for a child property object (So definitions['x'].properties)
+                                if(JPropertyObject.Name == "properties") // Now we are looking for a child property object (So definitions['x'].properties)
                                 {
-                                    foreach (JProperty propertyfieldinner2 in jpropertyobject.Value)
+                                    foreach (JProperty JPropertyFieldInnerProperty in JPropertyObject.Value)
                                     {
-                                        foreach (var propertyfieldinner3 in propertyfieldinner2) // Now we are looking through the fields of that object 
+                                        foreach (var JPropertyFieldInnerPropertyProperty in JPropertyFieldInnerProperty) // Now we are looking through the fields of that object 
                                         {
                                             // Is it a reference to another object ? 
-                                            if(propertyfieldinner3.Children().Count() > 1)
+                                            if(JPropertyFieldInnerPropertyProperty.Children().Count() > 1)
                                             {
                                                 // Now parse the type and format of that object
-                                                bool hasDecimal = propertyfieldinner3["format"]?.ToString() == "decimal"; 
+                                                bool hasDecimal = JPropertyFieldInnerPropertyProperty["format"]?.ToString() == "decimal"; 
                                                 bool isArrayAndHasString = false;
-                                                JArray typesanyof = (JArray) propertyfieldinner3["anyOf"] ?? new JArray(); 
-                                                foreach (JObject typedescr in typesanyof)
+
+                                                JArray JArrayAnyOf = (JArray) JPropertyFieldInnerPropertyProperty["anyOf"] ?? new JArray(); 
+                                                foreach (JObject typedescr in JArrayAnyOf)
                                                 {
                                                     if (typedescr.GetValue("type").ToString() == "string") 
                                                     {
@@ -205,10 +260,10 @@ namespace Company.Function
                                                 if (hasDecimal)
                                                 {
                                                     PatchList.Add(new PatchData() {
-                                                        Path = propertyfieldinner3["anyOf"].Path, 
+                                                        Path = JPropertyFieldInnerPropertyProperty["anyOf"]?.Path ?? JPropertyFieldInnerPropertyProperty.Path, 
                                                         IsArrayAndHasString = isArrayAndHasString,
                                                     });
-                                                    log.LogInformation($"{propertyfieldinner3["anyOf"].Path}, IsArrayAndHasString: {isArrayAndHasString}");
+                                                    log.LogInformation($"{JPropertyFieldInnerPropertyProperty["anyOf"]?.Path ?? JPropertyFieldInnerPropertyProperty.Path}, IsArrayAndHasString: {isArrayAndHasString}");
                                                 }
                                             }
                                         }
@@ -216,42 +271,25 @@ namespace Company.Function
                                 }
                             }
                         }
-                        
-                        // We need to do the actual patching here - Remove the array anyOf, then remove the multipleOf property, then add the singular type property.
-                        foreach (PatchData patchme in PatchList)
-                        {
-                            ((JArray)openapi.SelectToken(patchme.Path, true)).Parent.Remove();
-                            ((JValue)openapi.SelectToken(patchme.Path.Replace("anyOf","multipleOf"), true)).Parent.Remove();
-                            ((JObject)openapi.SelectToken(patchme.Path.Replace(".anyOf",""), true)).Add(new JProperty("type", new JValue(patchToWhat)));
-                        }
 
-                        if (bool.Parse(req.Headers["x-openapi-enrich-ifmatchtag"].FirstOrDefault() ?? "false"))
+                        // We need to do the actual patching here so if just a string type, remove the multipleOf property only.
+                        // If this is an array, then remove the array anyOf, then remove the multipleOf property, then add the singular type property.
+                        foreach (PatchData PatchMe in PatchList)
                         {
-                            // var operationlist = new List<PatchData>(); 
-                            // Find the PATCH and DELETE operations and monkeypatch in the if-match header to hold the etag
-                            foreach (JProperty jpath in openapi["paths"])
+                            if(PatchMe.IsArrayAndHasString) ((JArray)openapi.SelectToken(PatchMe.Path, true)).Parent.Remove();
+                            if(PatchMe.IsArrayAndHasString) 
                             {
-                                foreach (JObject jrestmethod in jpath)    // At this point we are looping through each each rest method
-                                {
-                                    ProcessMe processme = ProcessMe.dontprocess; 
-                                    if (jrestmethod["patch"]  != null) processme |= ProcessMe.patch;
-                                    if (jrestmethod["delete"] != null) processme |= ProcessMe.delete;
-                                    if (jrestmethod["get"]    != null) processme |= ProcessMe.get;
-                                    if (jrestmethod["put"]    != null) processme |= ProcessMe.put;
-                                    if (jrestmethod["post"]   != null) processme |= ProcessMe.post;
-                                    if (processme.HasFlag(ProcessMe.patch))
-                                    {
-                                        ProcessPatchOrDelete(jrestmethod, "patch");
-                                    }
-                                    if (processme.HasFlag(ProcessMe.delete))
-                                    {
-                                        ProcessPatchOrDelete(jrestmethod, "delete");
-                                    }
-                                }
+                                ((JValue)openapi.SelectToken(PatchMe.Path.Replace("anyOf","multipleOf"), true)).Remove();
                             }
-                        }
+                            else
+                            {
+                                openapi.SelectToken($"{PatchMe.Path}['multipleOf']", true).Parent.Remove();
+                            }
+                            if(PatchMe.IsArrayAndHasString) ((JObject)openapi.SelectToken(PatchMe.Path.Replace(".anyOf",""), true)).Add(new JProperty("type", new JValue(patchToWhat)));
+                        } 
                     }
                 }
+                
                 string transformfinal = openapi.ToString();
                 return new OkObjectResult(transformfinal);
             }
@@ -286,7 +324,7 @@ namespace Company.Function
 
             // Add to the array
             jsonparams.Add(paramobj);
-            
+
         }
 
         public static string ApplyTransform(string input, XslCompiledTransform xslTrans, XsltArgumentList args = null)
@@ -323,3 +361,6 @@ namespace Company.Function
         public bool IsNullable { get; set; } 
     }
 }
+               
+
+                                   
