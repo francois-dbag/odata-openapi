@@ -55,7 +55,7 @@
 													</div>
 													<div class="form-check form-switch">
 														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchIfMatch">
-														<label class="form-check-label" for="flexSwitchCheckDefault">Enhance if-match for Updates.</label>
+														<label class="form-check-label" for="flexSwitchCheckDefault">Enhance if-match for Updates with ETags.</label>
 													</div>
 												</div>
 											</div>
@@ -194,7 +194,8 @@
 				options.headers['x-openapi-version'] = "2.0";
 			}
 			options.headers['x-openapi-enrich-tags'] = "" + tagsEnrichEnabled;
-			options.headers['x-openapi-ifmatch'] = "" + flexSwitchIfMatchEnabled;
+			options.headers['x-openapi-add-metadata-etags'] = "" + flexSwitchIfMatchEnabled;
+			options.headers['x-openapi-enrich-ifmatchtag'] = "" + flexSwitchIfMatchEnabled;
 
 			fetch(apilocation, options)
 				.then(res => res.text())
