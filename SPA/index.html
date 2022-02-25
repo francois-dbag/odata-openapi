@@ -195,6 +195,7 @@
 			}
 			options.headers['x-openapi-enrich-tags'] = "" + tagsEnrichEnabled;
 			options.headers['x-openapi-add-metadata-etags'] = "" + flexSwitchIfMatchEnabled;
+			options.headers['x-openapi-enrich-ifmatchtag'] = "" + flexSwitchIfMatchEnabled;
 
 			fetch(apilocation, options)
 				.then(res => res.text())
