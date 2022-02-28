@@ -50,8 +50,16 @@
 														<label class="form-check-label" for="flexSwitchCheckDefault">Override swagger version 3 with 2.</label>
 													</div>
 													<div class="form-check form-switch">
+														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTruncate">
+														<label class="form-check-label" for="flexSwitchCheckDefault">Truncate API description.</label>
+													</div>
+													<div class="form-check form-switch">
 														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTagsEnrich">
 														<label class="form-check-label" for="flexSwitchCheckDefault">Enrich section 'tags' with description value.</label>
+													</div>
+													<div class="form-check form-switch">
+														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchDropMultipleOf">
+														<label class="form-check-label" for="flexSwitchCheckDefault">Drop multipleOf property from definition</label>
 													</div>
 													<div class="form-check form-switch">
 														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchIfMatch">
@@ -162,6 +170,8 @@
 			var swaggerChangeEnabled = $('#flexSwitchSwagger').is(':checked');
 			var tagsEnrichEnabled = $('#flexSwitchTagsEnrich').is(':checked');
 			var flexSwitchIfMatchEnabled = $('#flexSwitchIfMatch').is(':checked');
+			var flexSwitchTruncateEnabled = $('#flexSwitchTruncate').is(':checked');
+			var flexSwitchDropMultipleOfEnabled = $('#flexSwitchDropMultipleOf').is(':checked');
 
 			//target c# based implementation for odata version 2
 			var apilocation = "https://convert.odata-openapi.net/apiv2/HttpTrigger1"; 
@@ -193,9 +203,19 @@
 			if(swaggerChangeEnabled){
 				options.headers['x-openapi-version'] = "2.0";
 			}
-			options.headers['x-openapi-enrich-tags'] = "" + tagsEnrichEnabled;
-			options.headers['x-openapi-add-metadata-etags'] = "" + flexSwitchIfMatchEnabled;
-			options.headers['x-openapi-enrich-ifmatchtag'] = "" + flexSwitchIfMatchEnabled;
+			if(tagsEnrichEnabled){
+				options.headers['x-openapi-enrich-tags'] = "" + tagsEnrichEnabled;
+			}
+			if(flexSwitchIfMatchEnabled){
+				options.headers['x-openapi-add-metadata-etags'] = "" + flexSwitchIfMatchEnabled;
+				options.headers['x-openapi-ifmatch'] = "" + flexSwitchIfMatchEnabled;
+			}
+			if(flexSwitchTruncateEnabled){
+				options.headers['x-openapi-truncate-description'] = "" + flexSwitchTruncateEnabled;
+			}
+			if(flexSwitchDropMultipleOfEnabled){
+				options.headers['x-openapi-enrich-decimals'] = "" + flexSwitchDropMultipleOfEnabled;
+			}
 
 			fetch(apilocation, options)
 				.then(res => res.text())
