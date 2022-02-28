@@ -29,7 +29,7 @@ namespace Company.Function
             }
             else
             {
-                 root = $"{System.Environment.GetEnvironmentVariable("HOME")}{Path.DirectorySeparatorChar}site{Path.DirectorySeparatorChar}wwwroot{Path.DirectorySeparatorChar}";
+                root = Path.Combine(System.Environment.GetEnvironmentVariable("HOME"), "site", "wwwroot");
             }
             try
             {
@@ -49,14 +49,14 @@ namespace Company.Function
 
                 log.LogInformation("Converting to v4");
 
-                // Convert it to V4 OData First, then convert to OData, then return
+                // Convert it to V4 OData First, then convert to OpenAPI, then return
                 string v4OdataXml = ApplyTransform(await req.ReadAsStringAsync(), v2toV4xsl);
-
                 var args = new XsltArgumentList() ;
-                args.AddParam("scheme","", req.Headers["x-scheme"].FirstOrDefault() ?? "https");
-                args.AddParam("host","",req.Headers["x-host"].FirstOrDefault() ?? "services.odata.org");
-                args.AddParam("basePath","",req.Headers["x-basepath"].FirstOrDefault() ?? "/service-root");
-                args.AddParam("odata-version","","2.0"); // Could use ApplyTransform(v4OdataXml, CSDLToODataVersion) here; 
+
+                args.AddParam("scheme","", (req.Headers["x-scheme"].FirstOrDefault() ?? "") == "" ? "https" : req.Headers["x-scheme"].FirstOrDefault());
+                args.AddParam("host","", (req.Headers["x-host"].FirstOrDefault() ?? "") == "" ? "services.odata.org" : req.Headers["x-host"].FirstOrDefault());
+                args.AddParam("basePath","", (req.Headers["x-basepath"].FirstOrDefault() ?? "") == "" ? "/service-root" : req.Headers["x-basepath"].FirstOrDefault());
+                args.AddParam("odata-version","","2.0"); // Could use ApplyTransform(v4OdataXml, CSDLToODataVersion) here if we cared about versions other than v2.0
                 args.AddParam("diagram","","YES");
                 args.AddParam("openapi-root","", "https://raw.githubusercontent.com/oasis-tcs/odata-openapi/master/examples/");     
                 args.AddParam("openapi-version","" , req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0"); 
@@ -68,8 +68,8 @@ namespace Company.Function
 
                 if (bool.Parse(req.Headers["x-openapi-truncate-description"].FirstOrDefault() ?? "false"))
                 {
-                    // Info/Description parse and truncate to 1000 characters
-                    openapi["info"]["description"] = new JValue(openapi["info"]["description"].Value<string>().Substring(0,1000));
+                    // Info/Description parse and truncate to remove the EDM 
+                    openapi["info"]["description"] = new JValue(openapi["info"]["description"].Value<string>().Substring(0,openapi["info"]["description"].Value<string>().IndexOf("##")));//.Replace("\n"," ").Replace("\r"," "));
                 }
 
                 if (bool.Parse(req.Headers["x-openapi-enrich-tags"].FirstOrDefault() ?? "false"))
@@ -82,32 +82,67 @@ namespace Company.Function
                     }
                 }
                
-                if (bool.Parse(req.Headers["x-openapi-add-metadata-etags"].FirstOrDefault() ?? "false") && (req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0").StartsWith("3.0"))
+                if (bool.Parse(req.Headers["x-openapi-add-metadata-etags"].FirstOrDefault() ?? "false"))
                 {
-                    foreach (JProperty JSchemaDefinitions in openapi["components"]["schemas"])
+                    if ((req.Headers["x-openapi-version"].FirstOrDefault() ?? "3.0.0").StartsWith("3.0"))
                     {
-                        foreach (JProperty JPropertyObject in JSchemaDefinitions.Value)
+                        foreach (JProperty JSchemaDefinitions in openapi["components"]["schemas"])
                         {
-                            if(JPropertyObject.Name == "properties") // Now we are looking for a child property object (So components/schemas['x'].properties)
+                            foreach (JProperty JPropertyObject in JSchemaDefinitions.Value)
                             {
-                                ((JObject)JPropertyObject.Value).AddFirst(
-                                    new JProperty("__metadata", 
-                                        new JObject(
-                                            new JProperty("type", "object"), 
-                                            new JProperty("properties", 
-                                                new JObject(
-                                                    new JProperty(
-                                                        "etag", 
-                                                        new JObject(
-                                                            new JProperty("nullable", true), 
-                                                            new JProperty("type","string")
+                                if(JPropertyObject.Name == "properties") // Now we are looking for a child property object (So components/schemas['x'].properties)
+                                {
+                                    ((JObject)JPropertyObject.Value).AddFirst(
+                                        new JProperty("__metadata", 
+                                            new JObject(
+                                                new JProperty("type", "object"), 
+                                                new JProperty("properties", 
+                                                    new JObject(
+                                                        new JProperty(
+                                                            "etag", 
+                                                            new JObject(
+                                                                new JProperty("nullable", true), 
+                                                                new JProperty("type","string")
+                                                            )
                                                         )
                                                     )
                                                 )
                                             )
                                         )
-                                    )
-                                );
+                                    );
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+
+                        // ToDo: Fix Unable to cast object of type 'Newtonsoft.Json.Linq.JArray' to type 'Newtonsoft.Json.Linq.JValue'. error
+                        foreach (JProperty JSchemaDefinitions in openapi["definitions"])
+                        {
+                            foreach (JProperty JPropertyObject in JSchemaDefinitions.Value)
+                            {
+                                if(JPropertyObject.Name == "properties") // Now we are looking for a child property object (So components/schemas['x'].properties)
+                                {
+                                    ((JObject)JPropertyObject.Value).AddFirst(
+                                        new JProperty("__metadata", 
+                                            new JObject(
+                                                new JProperty("type", "object"), 
+                                                new JProperty("properties", 
+                                                    new JObject(
+                                                        new JProperty(
+                                                            "etag", 
+                                                            new JObject(
+                                                                new JProperty("nullable", true), 
+                                                                new JProperty("type","string")
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    );
+                                }
                             }
                         }
                     }
@@ -154,6 +189,7 @@ namespace Company.Function
                         //              ],
                         //          "format": "decimal"
                         //         },
+
                         var JTRoot = openapi["definitions"];                     
                         foreach (JProperty JDefinition in JTRoot)
                         {
@@ -295,7 +331,7 @@ namespace Company.Function
             }
             catch (Exception ex)
             {
-                return new BadRequestObjectResult($"An Error Occurred handling your request. \r\n{ex.Source} \r\n\r\n{ex.Message} \r\n\r\n Running from {root}");
+                return new BadRequestObjectResult($"An Error Occurred handling your request. \r\n{ex.Source}\r\n{ex.Message}");// \r\n\r\n Running from {root}");
             }
         }
 
