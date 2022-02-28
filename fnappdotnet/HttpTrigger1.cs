@@ -25,11 +25,11 @@ namespace Company.Function
 
             if (bool.Parse(System.Environment.GetEnvironmentVariable("OverrideLocalTransformFilesInRoot") ?? "false"))
             {
-                root = $"{System.Environment.GetEnvironmentVariable("HOME")}{Path.DirectorySeparatorChar}";
+                root = $"{System.Environment.GetEnvironmentVariable("HOME")}";
             }
             else
             {
-                root = Path.Combine(System.Environment.GetEnvironmentVariable("HOME"), "site", "wwwroot");
+                root = Path.Combine(System.Environment.GetEnvironmentVariable("HOME"), "site", "wwwroot") ;
             }
             try
             {
@@ -39,11 +39,11 @@ namespace Company.Function
                 {
                     log.LogInformation("First run on this host - caching stylesheets and transforms from " + root);
                     v2toV4xsl = new XslCompiledTransform();
-                    v2toV4xsl.Load(root + "V2-to-V4-CSDL.xsl");
+                    v2toV4xsl.Load(Path.Combine(root, "V2-to-V4-CSDL.xsl"));
                     v4CSDLToOpenAPIXslt = new XslCompiledTransform();
-                    v4CSDLToOpenAPIXslt.Load(root + "V4-CSDL-to-OpenAPI.xsl"); 
+                    v4CSDLToOpenAPIXslt.Load(Path.Combine(root, "V4-CSDL-to-OpenAPI.xsl")); 
                     CSDLToODataVersion = new XslCompiledTransform();
-                    CSDLToODataVersion.Load(root + "OData-Version.xsl"); 
+                    CSDLToODataVersion.Load(Path.Combine(root, "OData-Version.xsl")); 
                     log.LogInformation("First run completed, transforms loaded and compiled.");
                 }
 
