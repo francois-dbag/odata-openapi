@@ -5,7 +5,10 @@
     "debug.internalConsoleOptions": "neverOpen",
     "azureFunctions.preDeployTask": "publish (functions)",
     "cSpell.words": [
+        "CSDL",
         "dontprocess",
+        "etags",
+        "ifmatch",
         "jrestmethod",
         "jtdesc",
         "processme"
