@@ -65,6 +65,18 @@
 														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchIfMatch">
 														<label class="form-check-label" for="flexSwitchCheckDefault">Enhance if-match for Updates with ETags.</label>
 													</div>
+													<div class="form-check form-switch">
+														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAutoRest">
+														<label class="form-check-label" for="flexSwitchCheckDefault">Pivot for <a href="https://github.com/Azure/autorest">AutoRest</a> to generate SDKs</label>
+													</div>
+													<div class="form-check form-switch">
+														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchMetadata">
+														<label class="form-check-label" for="flexSwitchCheckDefault">Add $metadata operation and root.</label>
+													</div>
+													<div class="form-check form-switch">
+														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchDiagnostic">
+														<label class="form-check-label" for="flexSwitchCheckDefault">Add diagnostic endpoint for policy troubleshooting.</label>
+													</div>
 												</div>
 											</div>
 										</div>
@@ -215,6 +227,15 @@
 			}
 			if(flexSwitchDropMultipleOfEnabled){
 				options.headers['x-openapi-enrich-decimals'] = "" + flexSwitchDropMultipleOfEnabled;
+			}
+			if(flexSwitchAutoRest){
+				options.headers['x-openapi-pivot-for-autorest'] = "" + flexSwitchAutoRest;
+			}
+			if(flexSwitchMetadata){
+				options.headers['x-openapi-addmetadataoperations'] = "" + flexSwitchMetadata;
+			}
+			if(flexSwitchDiagnostic){
+				options.headers['x-openapi-adddiagnosticoperation'] = "" + flexSwitchDiagnostic;
 			}
 
 			fetch(apilocation, options)
