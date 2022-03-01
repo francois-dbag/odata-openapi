@@ -19,8 +19,7 @@ namespace OpenApi.Converter {
         private XslCompiledTransform v2toV4xsl = null, v4CSDLToOpenAPIXslt = null, CSDLToODataVersion = null; 
         [FunctionName("HttpTrigger1")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ILogger log) {
-            string root = ""; 
-            string inputData = await req.ReadAsStringAsync(); 
+            string root = "", inputData = await req.ReadAsStringAsync(); 
             if (bool.Parse(System.Environment.GetEnvironmentVariable("OverrideLocalTransformFilesInRoot") ?? "false")){
                 root = Path.Combine(System.Environment.GetEnvironmentVariable("HOME")); // Debugging override option
             }
@@ -32,8 +31,7 @@ namespace OpenApi.Converter {
                 XslCompiledTransform v4CSDLToOpenAPIXslt = new XslCompiledTransform(); v4CSDLToOpenAPIXslt.Load(Path.Combine(root, "V4-CSDL-to-OpenAPI.xsl")); 
                 XslCompiledTransform CSDLToODataVersion = new XslCompiledTransform(); CSDLToODataVersion.Load(Path.Combine(root, "OData-Version.xsl")); 
             }
-            string v4OdataXml = ApplyTransform(inputData, v2toV4xsl);
-            string inputVersion = ApplyTransform(inputData, CSDLToODataVersion);
+            string v4OdataXml = ApplyTransform(inputData, v2toV4xsl), inputVersion = ApplyTransform(inputData, CSDLToODataVersion);
             XsltArgumentList args = new XsltArgumentList();
             args.AddParam("scheme","", (req.Headers["x-scheme"].FirstOrDefault() ?? "") == "" ? "https" : req.Headers["x-scheme"].FirstOrDefault());
             args.AddParam("host","", (req.Headers["x-host"].FirstOrDefault() ?? "") == "" ? "services.odata.org" : req.Headers["x-host"].FirstOrDefault());
@@ -57,22 +55,17 @@ namespace OpenApi.Converter {
                 foreach(KeyValuePair<string, OpenApiPathItem> pathitem in openApiDocument.Paths){
                     foreach(KeyValuePair<OperationType,OpenApiOperation> operation in pathitem.Value.Operations){
                         var ifMatchParam = new OpenApiParameter(){
-                            Name = "if-match",
-                            In = ParameterLocation.Header, 
-                            Required = true,
-                            Schema = new OpenApiSchema() {
-                                Type = "string"
-                            }
-                        }; 
+                            Name = "if-match", In = ParameterLocation.Header, Required = true,
+                                Schema = new OpenApiSchema() {
+                                    Type = "string"
+                        }}; 
                         ifMatchParam.AddExtension("x-ms-visibility", new OpenApiString("required")); // Make this field appear in powerplatform's gui for the connector
                         ifMatchParam.AddExtension("x-ms-summary", new OpenApiString("Place the eTag value for optimistic concurrency control in this header"));
                         switch (operation.Key){
                             case OperationType.Patch : 
-                                operation.Value.Parameters.Add(ifMatchParam);
-                                break;
+                                operation.Value.Parameters.Add(ifMatchParam); break;
                             case OperationType.Delete : 
-                                operation.Value.Parameters.Add(ifMatchParam);
-                                break;
+                                operation.Value.Parameters.Add(ifMatchParam); break;
                         } 
                     }
                 }
@@ -81,9 +74,7 @@ namespace OpenApi.Converter {
                 foreach (KeyValuePair<string, OpenApiSchema> schemaDictionaryEntry in openApiDocument.Components.Schemas){
                     OpenApiSchema meta = new OpenApiSchema(){ Type = "object"};
                     meta.Properties.Add("etag", new OpenApiSchema(){
-                        Title = "The optimistic concurrency etag field, specify this in an if-match header", 
-                        Nullable = true,
-                        Type = "string"
+                        Title = "optimistic concurrency etag, use in if-match header", Nullable = true, Type = "string"
                     });
                     schemaDictionaryEntry.Value.Properties.Add("__metadata", meta);
                 }
@@ -99,25 +90,24 @@ namespace OpenApi.Converter {
                 }
                 openApiDocument.Paths.Remove("/$batch"); // Remove the Batch Operations as AutoREST can't handle the mimetype mixed/multipart type yet
             }
-            if (bool.Parse(req.Headers["x-openapi-addmetadataoperations"].FirstOrDefault() ?? "false")){ // Add the / head and get operations
-                var pathitemroot =  new OpenApiPathItem();
-                var pathitemmeta =  new OpenApiPathItem();
-                var rootHeadOpHead = new OpenApiOperation(){OperationId = "root/head", Summary = "The root of the API, needed for any csrf processing"};
+            if (bool.Parse(req.Headers["x-openapi-addmetadataoperations"].FirstOrDefault() ?? "false")){ // Add the special metadata / head and get operations
+                OpenApiPathItem pathItemRoot = new OpenApiPathItem(), pathItemMeta = new OpenApiPathItem();
+                OpenApiOperation rootHeadOpHead = new OpenApiOperation(){OperationId = "root/head", Summary = "The root of the API, needed for any csrf processing"};
                 rootHeadOpHead.Responses.Add("200", new OpenApiResponse(){Description = ""});
-                pathitemroot.Operations.Add(OperationType.Head, rootHeadOpHead);
-                var rootHeadOpGet = new OpenApiOperation(){OperationId = "root/get", Summary = "The root of the API"};
+                pathItemRoot.Operations.Add(OperationType.Head, rootHeadOpHead);
+                OpenApiOperation rootHeadOpGet = new OpenApiOperation(){OperationId = "root/get", Summary = "The root of the API"};
                 rootHeadOpGet.Responses.Add("200", new OpenApiResponse(){Description = ""});
-                pathitemroot.Operations.Add(OperationType.Get, rootHeadOpGet);
-                openApiDocument.Paths.Add("/", pathitemroot);
-                var rootHeadOpMeta = new OpenApiOperation(){OperationId = "$metadata/get", Summary = "$Metadata endpoint"};
+                pathItemRoot.Operations.Add(OperationType.Get, rootHeadOpGet);
+                openApiDocument.Paths.Add("/", pathItemRoot);
+                OpenApiOperation rootHeadOpMeta = new OpenApiOperation(){OperationId = "$metadata/get", Summary = "$Metadata endpoint"};
                 rootHeadOpMeta.Responses.Add("200", new OpenApiResponse(){Description = ""});
-                pathitemmeta.Operations.Add(OperationType.Get, rootHeadOpMeta);
-                openApiDocument.Paths.Add("/$metadata", pathitemmeta);
+                pathItemMeta.Operations.Add(OperationType.Get, rootHeadOpMeta);
+                openApiDocument.Paths.Add("/$metadata", pathItemMeta);
             }
             if (bool.Parse(req.Headers["x-openapi-adddiagnosticoperation"].FirstOrDefault() ?? "false")){ // add the /diagnostic operation for testing only
-                var pathItemDiag =  new OpenApiPathItem();
-                var diagHeadOpGet = new OpenApiOperation(){OperationId = "diagnostic/get", Summary = "The optional diagnostics policy for caching"};
-                diagHeadOpGet.Responses.Add("200", new OpenApiResponse(){Description = ""});
+                OpenApiPathItem pathItemDiag =  new OpenApiPathItem();
+                OpenApiOperation diagHeadOpGet = new OpenApiOperation(){OperationId = "diagnostic/get", Summary = "The optional diagnostics policy for caching"};
+                diagHeadOpGet.Responses.Add("200", new OpenApiResponse(){Description = "Caching Diagnostics Log Data"});
                 pathItemDiag.Operations.Add(OperationType.Get, diagHeadOpGet);
                 openApiDocument.Paths.Add("/diagnostic", pathItemDiag);
             }
@@ -130,7 +120,7 @@ namespace OpenApi.Converter {
             else {return new OkObjectResult(openApiDocument.Serialize(OpenApiSpecVersion.OpenApi2_0, OpenApiFormat.Json));
             }
         }
-        public static string ApplyTransform(string input, XslCompiledTransform xslTrans, XsltArgumentList args = null) {
+        public static string ApplyTransform(string input, XslCompiledTransform xslTrans, XsltArgumentList args = null) { // Apply an XSLT transform
             using (StringReader str = new StringReader(input) ){using (XmlReader xr = XmlReader.Create(str)) {using (StringWriter sw = new StringWriter()){
                 xslTrans.Transform(xr, args, sw);
                 return sw.ToString();
