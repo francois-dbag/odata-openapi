@@ -29,18 +29,16 @@ namespace Company.Function
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req, ILogger log)
         {
             string root = ""; 
-            string patchToWhat = System.Environment.GetEnvironmentVariable("PatchToWhat") ?? "number";
-
             if (bool.Parse(System.Environment.GetEnvironmentVariable("OverrideLocalTransformFilesInRoot") ?? "false"))
             {
+                // Debugging override option
                 root = $"{System.Environment.GetEnvironmentVariable("HOME")}";
             }
             else
             {
+                // is running in app service / functions
                 root = Path.Combine(System.Environment.GetEnvironmentVariable("HOME"), "site", "wwwroot") ;
             }
-
-            log.LogInformation("C# HTTP trigger function processed a request to convert OData to OpenAPI");
             if (v2toV4xsl == null)
             {
                 log.LogInformation("First run on this host - caching stylesheets and transforms from " + root);
@@ -50,19 +48,18 @@ namespace Company.Function
                 v4CSDLToOpenAPIXslt.Load(Path.Combine(root, "V4-CSDL-to-OpenAPI.xsl")); 
                 CSDLToODataVersion = new XslCompiledTransform();
                 CSDLToODataVersion.Load(Path.Combine(root, "OData-Version.xsl")); 
-                log.LogInformation("First run completed, transforms loaded and compiled.");
             }
 
-            log.LogInformation("Converting to v4");
-
             // Convert it to V4 OData First, then convert to OpenAPI, then return
-            string v4OdataXml = ApplyTransform(await req.ReadAsStringAsync(), v2toV4xsl);
-            var args = new XsltArgumentList() ;
-
+            string inputData = await req.ReadAsStringAsync(); 
+            string v4OdataXml = ApplyTransform(inputData, v2toV4xsl);
+            var args = new XsltArgumentList();
+            string inputVersion = ApplyTransform(inputData, CSDLToODataVersion);
+            log.LogInformation(inputVersion);
             args.AddParam("scheme","", (req.Headers["x-scheme"].FirstOrDefault() ?? "") == "" ? "https" : req.Headers["x-scheme"].FirstOrDefault());
             args.AddParam("host","", (req.Headers["x-host"].FirstOrDefault() ?? "") == "" ? "services.odata.org" : req.Headers["x-host"].FirstOrDefault());
             args.AddParam("basePath","", (req.Headers["x-basepath"].FirstOrDefault() ?? "") == "" ? "/service-root" : req.Headers["x-basepath"].FirstOrDefault());
-            args.AddParam("odata-version","", "2.0"); // ApplyTransform(v4OdataXml, CSDLToODataVersion)); // Could use  here if we cared about versions other than v2.0
+            args.AddParam("odata-version","", inputVersion); 
             args.AddParam("diagram","","YES");
             args.AddParam("openapi-root","", "https://raw.githubusercontent.com/oasis-tcs/odata-openapi/master/examples/");     
             args.AddParam("openapi-version","" , "3.0.0"); 
@@ -213,7 +210,7 @@ namespace Company.Function
             {
                 transformfinal = openApiDocument.Serialize(OpenApiSpecVersion.OpenApi2_0, OpenApiFormat.Json);
             }
-            
+
             return new OkObjectResult(transformfinal);
         }
         public static string ApplyTransform(string input, XslCompiledTransform xslTrans, XsltArgumentList args = null)
