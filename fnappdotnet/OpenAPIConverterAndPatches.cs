@@ -16,22 +16,17 @@ using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Any;
 namespace OpenApi.Converter {
     public class OpenAPIConverterAndPatches {
-        private XslCompiledTransform v2toV4xsl = null, v4CSDLToOpenAPIXslt = null, CSDLToODataVersion = null; 
+        
+        private readonly IRuntimeConfigAndTransforms configAndTransforms = null;
+        public OpenAPIConverterAndPatches(IRuntimeConfigAndTransforms configandtransforms)
+        {
+            configAndTransforms = configandtransforms;
+        }
         [FunctionName("HttpTrigger1")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ILogger log) {
-            string root = "", inputData = await req.ReadAsStringAsync(); 
-            if (bool.Parse(System.Environment.GetEnvironmentVariable("OverrideLocalTransformFilesInRoot") ?? "false")){
-                root = Path.Combine(System.Environment.GetEnvironmentVariable("HOME")); // Debugging override option
-            }
-            else{   
-                root = Path.Combine(System.Environment.GetEnvironmentVariable("HOME"), "site", "wwwroot"); // is running in app service / functions}
-            }
-            if (v2toV4xsl == null) { // First run on this host - caching stylesheets and transforms 
-                XslCompiledTransform v2toV4xsl = new XslCompiledTransform(); v2toV4xsl.Load(Path.Combine(root, "V2-to-V4-CSDL.xsl"));
-                XslCompiledTransform v4CSDLToOpenAPIXslt = new XslCompiledTransform(); v4CSDLToOpenAPIXslt.Load(Path.Combine(root, "V4-CSDL-to-OpenAPI.xsl")); 
-                XslCompiledTransform CSDLToODataVersion = new XslCompiledTransform(); CSDLToODataVersion.Load(Path.Combine(root, "OData-Version.xsl")); 
-            }
-            string v4OdataXml = ApplyTransform(inputData, v2toV4xsl), inputVersion = ApplyTransform(inputData, CSDLToODataVersion);
+            string inputData = await req.ReadAsStringAsync(); 
+            string v4OdataXml = ApplyTransform(inputData, configAndTransforms.v2toV4xsl);
+            string inputVersion = ApplyTransform(inputData, configAndTransforms.CSDLToODataVersion);
             XsltArgumentList args = new XsltArgumentList();
             args.AddParam("scheme","", (req.Headers["x-scheme"].FirstOrDefault() ?? "") == "" ? "https" : req.Headers["x-scheme"].FirstOrDefault());
             args.AddParam("host","", (req.Headers["x-host"].FirstOrDefault() ?? "") == "" ? "services.odata.org" : req.Headers["x-host"].FirstOrDefault());
@@ -40,7 +35,8 @@ namespace OpenApi.Converter {
             args.AddParam("diagram","","YES");
             args.AddParam("openapi-root","", "https://raw.githubusercontent.com/oasis-tcs/odata-openapi/master/examples/");     
             args.AddParam("openapi-version","" , "3.0.0"); 
-            OpenApiDocument openApiDocument = new OpenApiStringReader().Read(ApplyTransform(v4OdataXml, v4CSDLToOpenAPIXslt, args), out var diagnostic);
+            string openapitext = ApplyTransform(v4OdataXml, configAndTransforms.v4CSDLToOpenAPIXslt, args);
+            OpenApiDocument openApiDocument = new OpenApiStringReader().Read(openapitext, out var diagnostic);
             if (bool.Parse(req.Headers["x-openapi-enrich-decimals"].FirstOrDefault() ?? "false")){ // PowerPlatform doesn't like the multipleOf property on decimal types
                 foreach(OpenApiSchema schemaentry in openApiDocument.Components.Schemas.Values){
                     foreach(KeyValuePair<string, OpenApiSchema> schemasubentry in schemaentry.Properties){
@@ -114,16 +110,17 @@ namespace OpenApi.Converter {
             if (bool.Parse(req.Headers["x-openapi-truncate-description"].FirstOrDefault() ?? "false")){ // Info/Description parse and truncate to remove the EDM and keep us below 1000 chars.
                 openApiDocument.Info.Description = openApiDocument.Info.Description.Substring(0,openApiDocument.Info.Description.IndexOf("\n"));
             }
-            if (req.Headers["x-openapi-version"].FirstOrDefault()?.StartsWith("3.0") ?? true){ // Export in the correct format OpenAPI 3.0 or swagger 2.0
-                return new OkObjectResult(openApiDocument.Serialize(OpenApiSpecVersion.OpenApi3_0, OpenApiFormat.Json));
-            }
-            else {return new OkObjectResult(openApiDocument.Serialize(OpenApiSpecVersion.OpenApi2_0, OpenApiFormat.Json));
-            }
+            OpenApiSpecVersion spec = OpenApiSpecVersion.OpenApi3_0; // Export in the correct format OpenAPI 3.0 or swagger 2.0
+            if (req.Headers["x-openapi-version"].FirstOrDefault()?.StartsWith("2.0") ?? false) spec = OpenApiSpecVersion.OpenApi2_0;
+            string output = openApiDocument.Serialize(spec, OpenApiFormat.Json);
+            return new OkObjectResult(output); 
         }
         public static string ApplyTransform(string input, XslCompiledTransform xslTrans, XsltArgumentList args = null) { // Apply an XSLT transform
-            using (StringReader str = new StringReader(input) ){using (XmlReader xr = XmlReader.Create(str)) {using (StringWriter sw = new StringWriter()){
-                xslTrans.Transform(xr, args, sw);
-                return sw.ToString();
+            using (StringReader str = new StringReader(input) ){
+                using (XmlReader xr = XmlReader.Create(str)) {
+                    using (StringWriter sw = new StringWriter()){
+                        xslTrans.Transform(xr, args, sw);
+                        return sw.ToString();
             }}}
         }
     }
