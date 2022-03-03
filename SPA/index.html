@@ -177,7 +177,6 @@
 			var dataServicesMaxVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:MaxDataServiceVersion");
 			var dataServicesVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:DataServiceVersion");
 			var odataVersionValue = dataServicesVersionValue;
-
 			
 			var swaggerChangeEnabled = $('#flexSwitchSwagger').is(':checked');
 			var tagsEnrichEnabled = $('#flexSwitchTagsEnrich').is(':checked');
@@ -188,18 +187,12 @@
 			var flexSwitchMetadata = $('#flexSwitchMetadata').is(':checked');
 			var flexSwitchDiagnostic = $('#flexSwitchDiagnostic').is(':checked');
 
-			//target c# based implementation for odata version 2
-			var apilocation = "https://convert.odata-openapi.net/apiv2/HttpTrigger1"; 
-
 			//target nodejs based implementation for odata version 3+
 			if(dataServicesVersionValue == null && dataServicesMaxVersionValue == null){ //must be v4
-				apilocation = "https://convert.odata-openapi.net/apiv34/HttpTrigger1";
 				odataVersionValue = xmlRootVersionValue;
 			}else if( dataServicesMaxVersionValue >= "3.0"){//must be v3
-				apilocation = "https://convert.odata-openapi.net/apiv34/HttpTrigger1";
 				odataVersionValue = dataServicesMaxVersionValue
 			}else if( dataServicesVersionValue >= "3.0"){//must be v3
-				apilocation = "https://convert.odata-openapi.net/apiv34/HttpTrigger1";
 				odataVersionValue = dataServicesVersionValue;
 			}
 			toastOData(odataVersionValue);
@@ -241,7 +234,7 @@
 				options.headers['x-openapi-adddiagnosticoperation'] = "" + flexSwitchDiagnostic;
 			}
 
-			fetch(apilocation, options)
+			fetch("https://convert.odata-openapi.net/api/ConvertOdataToOpenAPI", options)
 				.then(res => res.text())
 				.then(res => document.getElementById('exampleoutput1').value = res);
 		}
