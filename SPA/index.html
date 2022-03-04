@@ -41,45 +41,6 @@
 										<textarea class="form-control" id="exampleInputOData1" aria-describedby="ODataHelp"></textarea>
 										<div id="ODataHelp" class="form-text">We will transmit your OData definition to our API backend, but we will never store your OData Definition.</div>
 										<br/>
-										<div class="mb-3">
-											<div id="featureSwitches" class="form-text">Optional feature switches to cater for consumer connector requirements (e.g. Microsoft PowerAutomate).</div>
-											<div class="row">
-												<div class="col">
-													<div class="form-check form-switch">
-														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchSwagger">
-														<label class="form-check-label" for="flexSwitchCheckDefault">Override swagger version 3 with 2.</label>
-													</div>
-													<div class="form-check form-switch">
-														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTruncate">
-														<label class="form-check-label" for="flexSwitchCheckDefault">Truncate API description.</label>
-													</div>
-													<div class="form-check form-switch">
-														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTagsEnrich">
-														<label class="form-check-label" for="flexSwitchCheckDefault">Enrich section 'tags' with description value.</label>
-													</div>
-													<div class="form-check form-switch">
-														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchDropMultipleOf">
-														<label class="form-check-label" for="flexSwitchCheckDefault">Drop multipleOf property from definition</label>
-													</div>
-													<div class="form-check form-switch">
-														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchIfMatch">
-														<label class="form-check-label" for="flexSwitchCheckDefault">Enhance if-match for Updates with ETags.</label>
-													</div>
-													<div class="form-check form-switch">
-														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAutoRest">
-														<label class="form-check-label" for="flexSwitchCheckDefault">Pivot for <a href="https://github.com/Azure/autorest">AutoRest</a> to generate SDKs</label>
-													</div>
-													<div class="form-check form-switch">
-														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchMetadata">
-														<label class="form-check-label" for="flexSwitchCheckDefault">Add $metadata operation and root.</label>
-													</div>
-													<div class="form-check form-switch">
-														<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchDiagnostic">
-														<label class="form-check-label" for="flexSwitchCheckDefault">Add diagnostic endpoint for policy troubleshooting.</label>
-													</div>
-												</div>
-											</div>
-										</div>
 									</div>
 									<button type="button" onclick="getConversion()" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseOne" data-bs-target="#collapseThree" class="btn btn-primary">Convert</button>
 								</div>
@@ -107,7 +68,54 @@
 										<label for="examplebasepath1" class="form-label">Optional basepath</label>
 										<input type="text" class="form-control" id="exampleinputbasepath1" aria-describedby="ODatabasepath" placeholder="/service-root"/>
 										<div id="ODatabasepath" class="form-text">Optionally override the base path in your definition to a custom one.</div>
-									</div>	
+									</div>
+									<div class="mb-3">
+										<div id="featureSwitches" class="form-text">Feature switches to cater for consumer connector requirements (e.g. Microsoft PowerAutomate).</div>
+										<div class="row">
+											<div class="col">
+												<div class="form-check form-switch">
+													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchSwagger">
+													<label class="form-check-label" for="flexSwitchCheckDefault">Override swagger version 3 with 2.</label>
+												</div>
+												<div class="form-check form-switch">
+													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTruncate">
+													<label class="form-check-label" for="flexSwitchCheckDefault">Truncate API description.</label>
+												</div>
+												<div class="form-check form-switch">
+													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTagsEnrich">
+													<label class="form-check-label" for="flexSwitchCheckDefault">Enrich section 'tags' with description value.</label>
+												</div>
+												<div class="form-check form-switch">
+													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchDropMultipleOf">
+													<label class="form-check-label" for="flexSwitchCheckDefault">Drop multipleOf property from definition</label>
+												</div>
+												<div class="form-check form-switch">
+													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchIfMatch">
+													<label class="form-check-label" for="flexSwitchCheckDefault">Enhance if-match for Updates with ETags.</label>
+												</div>
+												<div class="form-check form-switch">
+													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAutoRest">
+													<label class="form-check-label" for="flexSwitchCheckDefault">Pivot for <a href="https://github.com/Azure/autorest">AutoRest</a> to generate SDKs</label>
+												</div>
+												<div class="form-check form-switch">
+													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchMetadata">
+													<label class="form-check-label" for="flexSwitchCheckDefault">Add $metadata operation and root.</label>
+												</div>
+												<div class="form-check form-switch">
+													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchDiagnostic">
+													<label class="form-check-label" for="flexSwitchCheckDefault">Add diagnostic endpoint for policy troubleshooting.</label>
+												</div>
+												<div class="form-check form-switch">
+													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAuthentication">
+													<label class="form-check-label" for="flexSwitchCheckDefault">Add OAuth2 Authentication.</label>
+												</div>
+												<div class="form-check form-switch">
+													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAADTenant">
+													<input type="text" class="form-control" id="exampleinputaad" aria-describedby="aad" placeholder="Add Azure AD tenant id"/>
+												</div>
+											</div>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -186,6 +194,8 @@
 			var flexSwitchAutoRest = $('#flexSwitchAutoRest').is(':checked');
 			var flexSwitchMetadata = $('#flexSwitchMetadata').is(':checked');
 			var flexSwitchDiagnostic = $('#flexSwitchDiagnostic').is(':checked');
+			var flexSwitchAuthentication = $('#flexSwitchAuthentication').is(':checked');
+			var flexSwitchAAD = $('#flexSwitchAADTenant').is(':checked');
 
 			//target nodejs based implementation for odata version 3+
 			if(dataServicesVersionValue == null && dataServicesMaxVersionValue == null){ //must be v4
@@ -232,6 +242,12 @@
 			}
 			if(flexSwitchDiagnostic){
 				options.headers['x-openapi-adddiagnosticoperation'] = "" + flexSwitchDiagnostic;
+			}
+			if(flexSwitchAuthentication){
+				options.headers['x-openapi-enrich-security'] = "" + flexSwitchAuthentication;
+			}
+			if(flexSwitchAAD){
+				options.headers['x-openapi-aad-tenant'] = document.getElementById('exampleinputaad').value;
 			}
 
 			fetch("https://convert.odata-openapi.net/api/ConvertOdataToOpenAPI", options)
