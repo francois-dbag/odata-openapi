@@ -8,170 +8,256 @@
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 	</head>
 	<body>
-	<div class="container-fluid">
-		<div class="row">
-			<div class="col-md-12">
-				<nav class="navbar navbar-expand-lg navbar-primary bg-light">
-					<div class="container-fluid">
-					 <a class="navbar-brand" href="#">OData to OpenAPI3 Converter</a>
-					</div>
-				</nav>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-md-12">
-				<form>
-					<div class="accordion" id="accordionExample">
-						<div class="accordion-item">
-							<h2 class="accordion-header" id="headingOne">
-							<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-								OData Definition
-							</button>
-							</h2>
-							<div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-								<div class="accordion-body">
-									<div class="mb-3">
-										<!--<label for="basic-url" class="form-label">Link to metadata xml</label>
-										<div class="input-group mb-3">
-											<span class="input-group-text" id="basic-addon3">https://</span>
-											<input type="text" class="form-control" id="basic-url" aria-describedby="basic-addon3" placeholder="services.odata.org/v2/northwind/northwind.svc/$metadata">
-											<button type="button" onclick="importMetadata()" class="btn btn-dark">Import</button>	
-										</div>-->
-										<label for="exampleInputOData1" class="form-label">Manual Input of OData Definition</label>
-										<textarea class="form-control" id="exampleInputOData1" aria-describedby="ODataHelp"></textarea>
-										<div id="ODataHelp" class="form-text">We will transmit your OData definition to our API backend, but we will never store your OData Definition.</div>
-										<br/>
-									</div>
-									<button type="button" onclick="getConversion()" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseOne" data-bs-target="#collapseThree" class="btn btn-primary">Convert</button>
+	<h1 class="display-4 ms-1">OData to OpenAPI3</h1>
+	<ul class="nav nav-tabs" id="myTab" role="tablist">
+		<li class="nav-item" role="presentation">
+			<button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Converter</button>
+		</li>
+		<li class="nav-item" role="presentation">
+			<button class="nav-link" id="sdk-tab" data-bs-toggle="tab" data-bs-target="#sdk" type="button" role="tab" aria-controls="sdk" aria-selected="false">SDK Generator 🛠️</button>
+		</li>
+	</ul>
+	<div class="tab-content" id="myTabContent">
+		<div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+			<form>
+				<div class="accordion" id="accordionExample">
+					<div class="accordion-item">
+						<h2 class="accordion-header" id="headingOne">
+						<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+							OData Definition
+						</button>
+						</h2>
+						<div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+							<div class="accordion-body">
+								<div class="mb-3">
+									<!--<label for="basic-url" class="form-label">Link to metadata xml</label>
+									<div class="input-group mb-3">
+										<span class="input-group-text" id="basic-addon3">https://</span>
+										<input type="text" class="form-control" id="basic-url" aria-describedby="basic-addon3" placeholder="services.odata.org/v2/northwind/northwind.svc/$metadata">
+										<button type="button" onclick="importMetadata()" class="btn btn-dark">Import</button>	
+									</div>-->
+									<label for="exampleInputOData1" class="form-label">Manual Input of OData Definition</label>
+									<textarea class="form-control" id="exampleInputOData1" aria-describedby="ODataHelp"></textarea>
+									<div id="ODataHelp" class="form-text">We will transmit your OData definition to our API backend, but we will never store your OData Definition.</div>
+									<br/>
 								</div>
+								<button type="button" onclick="getConversion()" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseOne" data-bs-target="#collapseThree" class="btn btn-primary">Convert</button>
 							</div>
 						</div>
-						<div class="accordion-item">
-							<h2 class="accordion-header" id="headingTwo">
-							<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-								Optional Parameters
-							</button>
-							</h2>
-							<div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
-								<div class="accordion-body">
-									<div class="mb-3">
-										<label for="examplescheme1" class="form-label">Optional scheme</label>
-										<input type="text" class="form-control" id="exampleinputscheme1" aria-describedby="ODatascheme" placeholder="https"/>
-										<div id="ODatascheme" class="form-text">Optionally override the scheme in your definition to a custom one.</div>
-									</div>
-									<div class="mb-3">
-										<label for="examplehost1" class="form-label">Optional Host</label>
-										<input type="text" class="form-control" id="exampleinputhost1" aria-describedby="ODatahost" placeholder="services.OData.org"/>
-										<div id="ODatahost" class="form-text">Optionally override the host in your definition to a custom one.</div>
-									</div>
-									<div class="mb-3">
-										<label for="examplebasepath1" class="form-label">Optional basepath</label>
-										<input type="text" class="form-control" id="exampleinputbasepath1" aria-describedby="ODatabasepath" placeholder="/service-root"/>
-										<div id="ODatabasepath" class="form-text">Optionally override the base path in your definition to a custom one.</div>
-									</div>
-									<div class="mb-3">
-										<div id="featureSwitches" class="form-text">Feature switches to cater for consumer connector requirements (e.g. Microsoft PowerAutomate).</div>
-										<div class="row">
-											<div class="col">
-												<div class="form-check form-switch">
-													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchSwagger">
-													<label class="form-check-label" for="flexSwitchCheckDefault">Override swagger version 3 with 2.</label>
-												</div>
-												<div class="form-check form-switch">
-													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTruncate">
-													<label class="form-check-label" for="flexSwitchCheckDefault">Truncate API description.</label>
-												</div>
-												<div class="form-check form-switch">
-													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTagsEnrich">
-													<label class="form-check-label" for="flexSwitchCheckDefault">Enrich section 'tags' with description value.</label>
-												</div>
-												<div class="form-check form-switch">
-													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchDropMultipleOf">
-													<label class="form-check-label" for="flexSwitchCheckDefault">Drop multipleOf property from definition</label>
-												</div>
-												<div class="form-check form-switch">
-													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchIfMatch">
-													<label class="form-check-label" for="flexSwitchCheckDefault">Enhance if-match for Updates with ETags.</label>
-												</div>
-												<div class="form-check form-switch">
-													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAutoRest">
-													<label class="form-check-label" for="flexSwitchCheckDefault">Pivot for <a href="https://github.com/Azure/autorest">AutoRest</a> to generate SDKs</label>
-												</div>
-												<div class="form-check form-switch">
-													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchMetadata">
-													<label class="form-check-label" for="flexSwitchCheckDefault">Add $metadata operation and root.</label>
-												</div>
-												<div class="form-check form-switch">
-													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchDiagnostic">
-													<label class="form-check-label" for="flexSwitchCheckDefault">Add diagnostic endpoint for policy troubleshooting.</label>
-												</div>
-												<div class="form-check form-switch">
-													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAuthentication">
-													<label class="form-check-label" for="flexSwitchCheckDefault">Add OAuth2 Authentication.</label>
-												</div>
-												<div class="form-check form-switch">
-													<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAADTenant">
-													<input type="text" class="form-control" id="exampleinputaad" aria-describedby="aad" placeholder="Add Azure AD tenant id"/>
-												</div>
+					</div>
+					<div class="accordion-item">
+						<h2 class="accordion-header" id="headingTwo">
+						<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+							Optional Parameters
+						</button>
+						</h2>
+						<div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+							<div class="accordion-body">
+								<div class="mb-3">
+									<label for="examplescheme1" class="form-label">Optional scheme</label>
+									<input type="text" class="form-control" id="exampleinputscheme1" aria-describedby="ODatascheme" placeholder="https"/>
+									<div id="ODatascheme" class="form-text">Optionally override the scheme in your definition to a custom one.</div>
+								</div>
+								<div class="mb-3">
+									<label for="examplehost1" class="form-label">Optional Host</label>
+									<input type="text" class="form-control" id="exampleinputhost1" aria-describedby="ODatahost" placeholder="services.OData.org"/>
+									<div id="ODatahost" class="form-text">Optionally override the host in your definition to a custom one.</div>
+								</div>
+								<div class="mb-3">
+									<label for="examplebasepath1" class="form-label">Optional basepath</label>
+									<input type="text" class="form-control" id="exampleinputbasepath1" aria-describedby="ODatabasepath" placeholder="/service-root"/>
+									<div id="ODatabasepath" class="form-text">Optionally override the base path in your definition to a custom one.</div>
+								</div>
+								<div class="mb-3">
+									<div id="featureSwitches" class="form-text">Feature switches to cater for consumer connector requirements (e.g. Microsoft PowerAutomate).</div>
+									<div class="row">
+										<div class="col">
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchSwagger">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Override swagger version 3 with 2.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTruncate">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Truncate API description.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchTagsEnrich">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Enrich section 'tags' with description value.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchDropMultipleOf">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Drop multipleOf property from definition</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchIfMatch">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Enhance if-match for Updates with ETags.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchMetadata">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Add $metadata operation and root.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchDiagnostic">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Add diagnostic endpoint for policy troubleshooting.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAuthentication">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Add OAuth2 Authentication.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAADTenant">
+												<input type="text" class="form-control" id="exampleinputaad" aria-describedby="aad" placeholder="Add Azure AD tenant id"/>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
 						</div>
-						<div class="accordion-item">
-							<h2 class="accordion-header" id="headingThree">
-							<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-								Result
-							</button>
-							</h2>
-							<div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
-								<div class="accordion-body">
-									<div class="mb-3">
-										<label for="exampleoutput1" class="form-label">Converted Result</label>
-										<textarea class="form-control" id="exampleoutput1" rows="15" style="height:100%;"></textarea>
+					</div>
+					<div class="accordion-item">
+						<h2 class="accordion-header" id="headingThree">
+						<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+							Result
+						</button>
+						</h2>
+						<div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+							<div class="accordion-body">
+								<div class="mb-3">
+									<label for="exampleoutput1" class="form-label">Converted Result</label>
+									<textarea class="form-control" id="exampleoutput1" rows="15" style="height:100%;"></textarea>
+								</div>
+								<button type="button" onclick="copyToClipboard()" class="btn btn-primary">Copy to clipboard</button>
+								<button type="button" onclick="download()" class="btn btn-success">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+										<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"></path>
+										<path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"></path>
+									</svg>
+									Download
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+		<div class="tab-pane fade" id="sdk" role="tabpanel" aria-labelledby="sdk-tab">
+			<form>
+				<div class="accordion" id="accordionSDK">
+					<div class="accordion-item">
+						<h2 class="accordion-header" id="headingOneSDK">
+						<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOneSDK" aria-expanded="true" aria-controls="collapseOneSDK">
+							OData Definition
+						</button>
+						</h2>
+						<div id="collapseOneSDK" class="accordion-collapse collapse show" aria-labelledby="headingOneSDK" data-bs-parent="#accordionSDK">
+							<div class="accordion-body">
+								<div class="mb-3">
+									<label for="exampleInputOData1SDK" class="form-label">Manual Input of OData Definition</label>
+									<textarea class="form-control" id="exampleInputOData1SDK" aria-describedby="ODataHelp"></textarea>
+									<div id="ODataHelp" class="form-text">We will transmit your OData definition to our API backend, but we will never store your OData Definition.</div>
+									<br/>
+								</div>
+								<button type="button" onclick="getSDK()" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseOneSDK" data-bs-target="#collapseThreeSDK" class="btn btn-success" disabled>Generate</button>
+							</div>
+						</div>
+					</div>
+					<div class="accordion-item">
+						<h2 class="accordion-header" id="headingTwoSDK">
+						<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwoSDK" aria-expanded="false" aria-controls="collapseTwoSDK">
+							Optional Parameters
+						</button>
+						</h2>
+						<div id="collapseTwoSDK" class="accordion-collapse collapse" aria-labelledby="headingTwoSDK" data-bs-parent="#accordionSDK">
+							<div class="accordion-body">
+								<div class="mb-3">
+									<label for="examplescheme1" class="form-label">Optional scheme</label>
+									<input type="text" class="form-control" id="exampleinputscheme1SDK" aria-describedby="ODatascheme" placeholder="https"/>
+									<div id="ODataschemeSDK" class="form-text">Optionally override the scheme in your definition to a custom one.</div>
+								</div>
+								<div class="mb-3">
+									<label for="examplehost1" class="form-label">Optional Host</label>
+									<input type="text" class="form-control" id="exampleinputhost1" aria-describedby="ODatahost" placeholder="services.OData.org"/>
+									<div id="ODatahostSDK" class="form-text">Optionally override the host in your definition to a custom one.</div>
+								</div>
+								<div class="mb-3">
+									<label for="examplebasepath1" class="form-label">Optional basepath</label>
+									<input type="text" class="form-control" id="exampleinputbasepath1SDK" aria-describedby="ODatabasepath" placeholder="/service-root"/>
+									<div id="ODatabasepathSDK" class="form-text">Optionally override the base path in your definition to a custom one.</div>
+								</div>
+								<div class="mb-3">
+									<div id="featureSwitches" class="form-text">Feature switches to cater for consumer connector requirements (e.g. Microsoft PowerAutomate).</div>
+									<div class="row">
+										<div class="col">
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchSwaggerSDK">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Override swagger version 3 with 2.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchIfMatchSDK">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Enhance if-match for Updates with ETags.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAutoRestSDK">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Pivot for <a href="https://github.com/Azure/autorest">AutoRest</a> to generate SDKs</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchMetadataSDK">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Add $metadata operation and root.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAuthenticationSDK">
+												<label class="form-check-label" for="flexSwitchCheckDefault">Add OAuth2 Authentication.</label>
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchAADTenantSDK">
+												<input type="text" class="form-control" id="exampleinputaadSDK" aria-describedby="aad" placeholder="Add Azure AD tenant id"/>
+											</div>
+										</div>
 									</div>
-									<button type="button" onclick="copyToClipboard()" class="btn btn-primary">Copy to clipboard</button>
-									<button type="button" onclick="download()" class="btn btn-success">
-										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-											<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"></path>
-											<path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"></path>
-										</svg>
-										Download
-									  </button>
 								</div>
 							</div>
 						</div>
 					</div>
-				</form>
-				<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-					<div id="liveDownloadToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
-					  <div class="toast-header">
-						<strong class="me-auto">Note</strong>
-						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-					  </div>
-					  <div class="toast-body">
-						Download in progress. Please wait.
-					  </div>
-					</div>
 				</div>
-				<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-					<div id="liveODataToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
-					  <div class="toast-header">
-						<strong class="me-auto">Note</strong>
-						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-					  </div>
-					  <div id="odataversionnumber" class="toast-body">
-						
-					  </div>
-					</div>
+			</form>
+		</div>
+		<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+			<div id="liveDownloadToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+				<div class="toast-header">
+					<strong class="me-auto">Note</strong>
+					<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+				</div>
+				<div class="toast-body">
+					Download in progress. Please wait.
+				</div>
+			</div>
+		</div>
+		<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+			<div id="liveODataToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+				<div class="toast-header">
+					<strong class="me-auto">Note</strong>
+					<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+				</div>
+				<div id="odataversionnumber" class="toast-body">
+					
+				</div>
+			</div>
+		</div>
+		<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+			<div id="errorToast" class="toast hide bg-warning" role="alert" aria-live="assertive" aria-atomic="true">
+				<div class="toast-header">
+					<strong class="me-auto">Note</strong>
+					<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+				</div>
+				<div id="errorMessage" class="toast-body text-dark">
+					Oops, Something went wrong. Be assured we got notified.
 				</div>
 			</div>
 		</div>
 		<footer class="footer mt-auto py-3 bg-light">
 			<div class="container">
-			  <span class="text-muted">App is based upon <a href="https://github.com/oasis-tcs/OData-openapi">OASIS OData to OpenAPI converter tools</a> and provided as is. Please have a look at our <a href="https://github.com/WillEastbury/OData-openapi">open-source project</a> for further details.</span>
-			  <span class="text-muted">Post feedback and Issues on our <a href="https://github.com/WillEastbury/odata-openapi/issues">GitHub repos.</a></span>
+			<span class="text-muted">App is based upon <a href="https://github.com/oasis-tcs/OData-openapi">OASIS OData to OpenAPI converter tools</a> and provided as is. Please have a look at our <a href="https://github.com/WillEastbury/OData-openapi">open-source project</a> for further details.</span>
+			<span class="text-muted">Post feedback and Issues on our <a href="https://github.com/WillEastbury/odata-openapi/issues">GitHub repos.</a></span>
 			</div>
 		</footer>
 	</div>
@@ -191,7 +277,6 @@
 			var flexSwitchIfMatchEnabled = $('#flexSwitchIfMatch').is(':checked');
 			var flexSwitchTruncateEnabled = $('#flexSwitchTruncate').is(':checked');
 			var flexSwitchDropMultipleOfEnabled = $('#flexSwitchDropMultipleOf').is(':checked');
-			var flexSwitchAutoRest = $('#flexSwitchAutoRest').is(':checked');
 			var flexSwitchMetadata = $('#flexSwitchMetadata').is(':checked');
 			var flexSwitchDiagnostic = $('#flexSwitchDiagnostic').is(':checked');
 			var flexSwitchAuthentication = $('#flexSwitchAuthentication').is(':checked');
@@ -234,9 +319,6 @@
 			if(flexSwitchDropMultipleOfEnabled){
 				options.headers['x-openapi-enrich-decimals'] = "" + flexSwitchDropMultipleOfEnabled;
 			}
-			if(flexSwitchAutoRest){
-				options.headers['x-openapi-pivot-for-autorest'] = "" + flexSwitchAutoRest;
-			}
 			if(flexSwitchMetadata){
 				options.headers['x-openapi-addmetadataoperations'] = "" + flexSwitchMetadata;
 			}
@@ -251,8 +333,88 @@
 			}
 
 			fetch("https://convert.odata-openapi.net/api/ConvertOdataToOpenAPI", options)
-				.then(res => res.text())
-				.then(res => document.getElementById('exampleoutput1').value = res);
+				.then((response) => {
+					if(response.status == 200){
+						return response.text();
+					}
+					throw new Error('Oops, Something went wrong. Be assured we got notified.');
+				})
+				.then(res => document.getElementById('exampleoutput1').value = res)
+				.catch((error) => {
+					console.log(error);
+					toastError();
+				});
+		}
+
+		function getSDK()
+		{
+			var domParser = new DOMParser();
+			var XMLDocument = domParser.parseFromString(document.getElementById('exampleInputOData1SDK').value, "text/xml");
+			var xmlRootVersionValue = XMLDocument.getElementsByTagName("edmx:Edmx")[0].getAttribute("Version");
+			var dataServicesMaxVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:MaxDataServiceVersion");
+			var dataServicesVersionValue = XMLDocument.getElementsByTagName("edmx:DataServices")[0].getAttribute("m:DataServiceVersion");
+			var odataVersionValue = dataServicesVersionValue;
+			
+			var swaggerChangeEnabled = $('#flexSwitchSwaggerSDK').is(':checked');
+			var flexSwitchIfMatchEnabled = $('#flexSwitchIfMatchSDK').is(':checked');
+			var flexSwitchAutoRest = $('#flexSwitchAutoRestSDK').is(':checked');
+			var flexSwitchMetadata = $('#flexSwitchMetadataSDK').is(':checked');
+			var flexSwitchAuthentication = $('#flexSwitchAuthenticationSDK').is(':checked');
+			var flexSwitchAAD = $('#flexSwitchAADTenantSDK').is(':checked');
+
+			//target nodejs based implementation for odata version 3+
+			if(dataServicesVersionValue == null && dataServicesMaxVersionValue == null){ //must be v4
+				odataVersionValue = xmlRootVersionValue;
+			}else if( dataServicesMaxVersionValue >= "3.0"){//must be v3
+				odataVersionValue = dataServicesMaxVersionValue
+			}else if( dataServicesVersionValue >= "3.0"){//must be v3
+				odataVersionValue = dataServicesVersionValue;
+			}
+			toastOData(odataVersionValue);
+			
+			var options = {
+				method: 'POST',
+				body: document.getElementById('exampleInputOData1SDK').value,
+				headers: {
+					'Content-Type': 'application/json',
+					'x-scheme': document.getElementById('exampleinputscheme1').value,
+					'x-basepath': document.getElementById('exampleinputbasepath1').value,
+					'x-host': document.getElementById('exampleinputhost1').value
+				}
+			}
+			//add features if enabled
+			if(swaggerChangeEnabled){
+				options.headers['x-openapi-version'] = "2.0";
+			}
+			if(flexSwitchIfMatchEnabled){
+				options.headers['x-openapi-add-metadata-etags'] = "" + flexSwitchIfMatchEnabled;
+				options.headers['x-openapi-ifmatch'] = "" + flexSwitchIfMatchEnabled;
+			}
+			if(flexSwitchAutoRest){
+				options.headers['x-openapi-pivot-for-autorest'] = "" + flexSwitchAutoRest;
+			}
+			if(flexSwitchMetadata){
+				options.headers['x-openapi-addmetadataoperations'] = "" + flexSwitchMetadata;
+			}
+			if(flexSwitchAuthentication){
+				options.headers['x-openapi-enrich-security'] = "" + flexSwitchAuthentication;
+			}
+			if(flexSwitchAAD){
+				options.headers['x-openapi-aad-tenant'] = document.getElementById('exampleinputaad').value;
+			}
+
+			fetch("https://convert.odata-openapi.net/api/ConvertOdataToOpenAPI", options)
+				.then((response) => {
+					if(response.status == 200){
+						return response.text();
+					}
+					throw new Error('Oops, Something went wrong. Be assured we got notified.');
+				})
+				.then(res => document.getElementById('exampleoutput1').value = res)
+				.catch((error) => {
+					console.log(error);
+					toastError();
+				});
 		}
 
 		/*function importMetadata(){
@@ -307,6 +469,12 @@
 
 		function toastDownload(){
 			var myAlert = document.getElementById('liveDownloadToast');//select id of toast
+			var bsAlert = new bootstrap.Toast(myAlert);//inizialize it
+			bsAlert.show();//show it
+		}
+
+		function toastError(){
+			var myAlert =document.getElementById('errorToast');//select id of toast
 			var bsAlert = new bootstrap.Toast(myAlert);//inizialize it
 			bsAlert.show();//show it
 		}
