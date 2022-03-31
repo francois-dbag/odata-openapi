@@ -422,6 +422,8 @@
 				options.headers['x-openapi-aad-tenant'] = document.getElementById('exampleinputaad').value;
 			}
 
+			options.headers['x-generate-sdk'] = lang;
+
 			fetch("https://convert.odata-openapi.net/api/ConvertOdataToOpenAPI", options)
 				.then((response) => {
 					if(response.status == 200){
