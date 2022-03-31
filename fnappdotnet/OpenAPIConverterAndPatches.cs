@@ -2,7 +2,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using System.Globalization; 
+// using System.Globalization; 
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -15,7 +15,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Any;
-using NSwag.CodeGeneration.CSharp;
+// using NSwag.CodeGeneration.CSharp;
 
 namespace OpenApi.Converter {
     public class OpenAPIConverterAndPatches {
@@ -29,26 +29,26 @@ namespace OpenApi.Converter {
 
             return new OkObjectResult(await ProcessOpenAPI(req)); 
         }
-        [FunctionName("ConvertODataToCSharp")]
-        public async Task<IActionResult> RunCodeCSharp([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ILogger log) {
+        // [FunctionName("ConvertODataToCSharpNSwag")]
+        // public async Task<IActionResult> RunCodeCSharp([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ILogger log) {
 
-            string openApiText = await ProcessOpenAPI(req); 
-            var settings = new CSharpClientGeneratorSettings
-            {
-                ClassName = "MyClass", 
-                CSharpGeneratorSettings = 
-                {
-                    Namespace = (req.Headers["x-basepath"].FirstOrDefault() ?? "") == "" ? "MyNamespace" : req.Headers["x-basepath"].FirstOrDefault()
-                }
-            };
+        //     string openApiText = await ProcessOpenAPI(req); 
+        //     var settings = new CSharpClientGeneratorSettings
+        //     {
+        //         ClassName = "MyClass", 
+        //         CSharpGeneratorSettings = 
+        //         {
+        //             Namespace = (req.Headers["x-basepath"].FirstOrDefault() ?? "") == "" ? "MyNamespace" : req.Headers["x-basepath"].FirstOrDefault()
+        //         }
+        //     };
 
-            var openApiModel = await NSwag.OpenApiDocument.FromJsonAsync(openApiText);
-            openApiModel.GenerateOperationIds();
-            var generator = new CSharpClientGenerator(openApiModel, settings);	
-            var code = generator.GenerateFile();
-            return new OkObjectResult(code); 
+        //     var openApiModel = await NSwag.OpenApiDocument.FromJsonAsync(openApiText);
+        //     openApiModel.GenerateOperationIds();
+        //     var generator = new CSharpClientGenerator(openApiModel, settings);	
+        //     var code = generator.GenerateFile();
+        //     return new OkObjectResult(code); 
 
-        }
+        // }
 
 
         public async Task<string> ProcessOpenAPI(HttpRequest req)

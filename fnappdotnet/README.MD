@@ -3,4 +3,6 @@ Microsoft OpenAPI libraries to post-process the JSON output of the OpenAPI file 
 
 This version can also work with any OData import format from v2 onwards as it is xslt based. 
 
-Note we are currently pinning the OpenAPI.net vesion to a preview version due to a big when being used from dotnet6 in the 1.2.3 version of the library.
+Note we are currently pinning the OpenAPI.net version to a preview version due to a big when being used from dotnet6 in the 1.2.3 version of the library.
+
+Also the /api/CodeGen route supports taking in an OpenAPI file and generating an SDK using AutoREST. 
