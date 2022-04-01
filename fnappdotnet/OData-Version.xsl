@@ -5,9 +5,7 @@
 >
   <!--
     This style sheet extracts the OData version numver from a $metadata document.
-
     Latest version: https://github.com/oasis-tcs/odata-openapi/blob/master/tools/OData-Version.xsl
-
   -->
   <xsl:output method="text" indent="yes" encoding="UTF-8" omit-xml-declaration="yes" />
   <xsl:strip-space elements="*" />
