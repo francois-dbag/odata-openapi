@@ -274,6 +274,7 @@
 	</div>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js" integrity="sha512-csNcFYJniKjJxRWRV1R7fvnXrycHP6qDR21mgz1ZP55xY5d+aHLfo9/FcGDQLfn2IfngbAHd8LdfsagcCqgTcQ==" crossorigin="anonymous"></script>
 	<script>
 
 		function getConversion()
@@ -423,11 +424,17 @@
 			options.headers['x-generate-sdk'] = lang;
 
 			fetch("https://convert.odata-openapi.net/api/CodeGen", options)
-				.then((response) => {
+				.then(function(response){
 					if(response.status == 200){
-						return response.text();
+						response.blob().then(function(myBlob) {
+							var filename = response.headers.get('content-disposition');
+							filename = filename.split(';')[1].trim().split('=')[1] + ".zip";
+							// Download the file
+							saveAs(myBlob, filename);
+						});
+					}else{
+						throw new Error('Oops, Something went wrong. Be assured we got notified.');
 					}
-					throw new Error('Oops, Something went wrong. Be assured we got notified.');
 				})
 				.then(res => document.getElementById('exampleoutput1').value = res)
 				.catch((error) => {
@@ -462,15 +469,16 @@
 			toastDownload();
 			var text = document.getElementById("exampleoutput1").value;
 			text = text.replace(/\n/g, "\r\n"); // To retain the Line breaks.
-			var blob = new Blob([text], { type: "application/json"});
-			var anchor = document.createElement("a");
+			var myBlob = new Blob([text], { type: "application/json"});
+			saveAs(myBlob, "openapi-spec.json");
+			/*var anchor = document.createElement("a");
 			anchor.download = "openapi-spec.json";
 			anchor.href = window.URL.createObjectURL(blob);
 			anchor.target ="_blank";
 			anchor.style.display = "none"; // just to be safe!
 			document.body.appendChild(anchor);
 			anchor.click();
-			document.body.removeChild(anchor);
+			document.body.removeChild(anchor);*/
 		}
 
 		function toast(){
