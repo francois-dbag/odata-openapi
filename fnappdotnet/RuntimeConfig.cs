@@ -5,11 +5,13 @@ namespace OpenApi.Converter {
         XslCompiledTransform v2toV4xsl {get;set;}
         XslCompiledTransform v4CSDLToOpenAPIXslt  {get;set;}
         XslCompiledTransform CSDLToODataVersion {get;set;}
+        XslCompiledTransform v4CSDLtoJSONSchema {get;set;}
     }
     public class RuntimeConfigAndTransforms : IRuntimeConfigAndTransforms
     {
         public XslCompiledTransform v2toV4xsl  {get;set;}
         public XslCompiledTransform v4CSDLToOpenAPIXslt  {get;set;}
         public XslCompiledTransform CSDLToODataVersion  {get;set;}
+        public XslCompiledTransform v4CSDLtoJSONSchema {get;set;}
     }
 }

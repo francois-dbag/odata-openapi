@@ -1,6 +1,6 @@
 # 📖Introduction
 
-This work is a simple hosting container for the OASIS OData-openapi js executable wrapped in a nodeJs running Azure Function App.
+This work is a simple hosting container for the OASIS OData-openapi js executable wrapped in a nodeJs running Azure Function App. In addition to OpenAPI conversion it offers OData metadata JSON translation based of the OASIS [odata-json-schema repos](https://github.com/oasis-tcs/odata-json-schema).
 
 It exists solely to demonstrate how to provide a simple HTML5 wrapper around the OASIS code repository, primarily for the purpose of making it easier to work with SAP OData services and their XML metadata when wanting to publish them through Azure API Management.
 

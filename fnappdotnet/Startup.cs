@@ -16,7 +16,8 @@ namespace OpenApi.Converter
                 return new RuntimeConfigAndTransforms(){
                     v2toV4xsl = LoadTransform(Path.Combine(rootpath, "V2-to-V4-CSDL.xsl")),
                     v4CSDLToOpenAPIXslt = LoadTransform(Path.Combine(rootpath, "V4-CSDL-to-OpenAPI.xsl")),
-                    CSDLToODataVersion = LoadTransform(Path.Combine(rootpath, "OData-Version.xsl"))
+                    CSDLToODataVersion = LoadTransform(Path.Combine(rootpath, "OData-Version.xsl")),
+                    v4CSDLtoJSONSchema = LoadTransform(Path.Combine(rootpath, "V4-CSDL-to-JSONSchema.xsl"))
                 };
             });
         }

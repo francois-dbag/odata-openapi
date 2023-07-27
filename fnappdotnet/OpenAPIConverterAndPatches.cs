@@ -26,8 +26,14 @@ namespace OpenApi.Converter {
         }
         [FunctionName("ConvertOdataToOpenAPI")]
         public async Task<IActionResult> RunOpenAPI([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ILogger log) {
-
-            return new OkObjectResult(await ProcessOpenAPI(req)); 
+            if(req.Headers["x-odata-as-json"].FirstOrDefault() ?? "" != "")
+            {
+                return new OkObjectResult(await ProcessJSONSchema(req)); 
+            }
+            else
+            {
+                return new OkObjectResult(await ProcessOpenAPI(req)); 
+            }
         }
         // [FunctionName("ConvertODataToCSharpNSwag")]
         // public async Task<IActionResult> RunCodeCSharp([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ILogger log) {
@@ -50,7 +56,22 @@ namespace OpenApi.Converter {
 
         // }
 
-
+        public async Task<string> ProcessJSONSchema(HttpRequest req)
+        {
+            string inputData = await req.ReadAsStringAsync();
+            string v4OdataXml = "";
+            string inputVersion = ApplyTransform(inputData, configAndTransforms.CSDLToODataVersion);
+            if (!inputVersion.StartsWith("4"))
+            {
+                v4OdataXml = ApplyTransform(inputData, configAndTransforms.v2toV4xsl);
+            }
+            else
+            {
+                v4OdataXml = inputData; 
+            }
+             XsltArgumentList args = new XsltArgumentList();
+             return ApplyTransform(v4OdataXml, configAndTransforms.v4CSDLtoJSONSchema, args);
+        }
         public async Task<string> ProcessOpenAPI(HttpRequest req)
         {
             string inputData = await req.ReadAsStringAsync();
