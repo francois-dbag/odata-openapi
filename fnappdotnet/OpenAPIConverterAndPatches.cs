@@ -26,7 +26,7 @@ namespace OpenApi.Converter {
         }
         [FunctionName("ConvertOdataToOpenAPI")]
         public async Task<IActionResult> RunOpenAPI([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ILogger log) {
-            if(req.Headers["x-odata-as-json"].FirstOrDefault() ?? "" != "")
+            if((req.Headers["x-odata-as-json"].FirstOrDefault() ?? "") != "")
             {
                 return new OkObjectResult(await ProcessJSONSchema(req)); 
             }

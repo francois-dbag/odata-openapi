@@ -28,6 +28,10 @@
     <None Update="V4-CSDL-to-OpenAPI.xsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </None>
+    <None Update="V4-CSDL-to-JSONSchema.xsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </None>  
     </ItemGroup>  
     <ItemGroup>
