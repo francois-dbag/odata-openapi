@@ -12,6 +12,14 @@ Find more details on the SDK generation on the [Kiota website](https://microsoft
 
 Please feel free to deploy it yourself via a combination of a Azure Functions Consumption App (Source is in the /FunctionApp/ folder) and a web-enabled Azure Storage Account (Source is in the /SPA/ folder).
 
+## 🪂Deploy Function App
+
+You can deploy the Function App to an existing app via the Azure CLI using the following command:
+
+```bash
+func azure functionapp publish
+```
+
 ## 🤟🏾Contributing
 
 Please raise any issues and feature requests via [Github Issues](https://github.com/WillEastbury/odata-openapi/issues).
