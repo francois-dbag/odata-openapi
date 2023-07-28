@@ -17,7 +17,7 @@ Please feel free to deploy it yourself via a combination of a Azure Functions Co
 You can deploy the Function App to an existing app via the Azure CLI using the following command:
 
 ```bash
-func azure functionapp publish
+func azure functionapp publish ODataToOpenAPI3Converter
 ```
 
 ## 🤟🏾Contributing
